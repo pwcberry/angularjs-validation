@@ -1,0 +1,27 @@
+module.exports = function (grunt) {
+
+    grunt.initConfig({
+        jshint: {
+            files: ['./src/js/**/*.js', './test/**/*Spec.js']
+        },
+        copy: {
+            lib: {
+                files:[ {
+                    expand: true,
+                    flatten: true,
+                    src: ['./lib/angular/angular.js'],
+                    dest: './demo/public/javascripts'
+                }]
+            }
+        }
+
+    });
+
+    grunt.loadNpmTasks('grunt-contrib-concat');
+    grunt.loadNpmTasks('grunt-contrib-copy');
+    grunt.loadNpmTasks('grunt-contrib-jshint');
+    grunt.loadNpmTasks('grunt-karma');
+
+    grunt.registerTask('default', ['jshint', 'concat', 'copy:lib']);
+
+};

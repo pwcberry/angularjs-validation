@@ -1,0 +1,26 @@
+extends layout
+
+block content
+    .page-content(ng-app="ValidationDemo")
+        h1= title
+        .person-form(ng-controller="DemoCtrl")
+            form(action="#", method="get", name="DemoForm", ng-submit="submitForm($event)")
+                .input-group
+                    input(type="text", name="FirstName", ng-model="firstName")
+                .input-group
+                    input(type="text", name="LastName", ng-model="lastName")
+                .form-actions
+                    button(type="submit", class="btn btn-primary") Submit
+
+block scripts
+    script.
+        angular.module('ValidationDemo', [])
+            .controller('DemoCtrl', function($scope){
+                $scope.submitForm = function($event) {
+                    try {
+
+                    }finally {
+                        $event.preventDefault();
+                    }
+                };
+            });

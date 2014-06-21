@@ -1,0 +1,8 @@
+{
+    "name": "angularjs-validation",
+    "private": true,
+    "description":"",
+    "devDependencies": {
+        "angular": "~1.2.18"
+    }
+}

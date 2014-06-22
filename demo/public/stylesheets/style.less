@@ -41,9 +41,12 @@ button {
   input[type=text]{
     padding: 0.5em 0.75em;
     color: #000;
-    border:1px solid #666;
+    border:1px solid #999;
     width: 100%;
     outline: 0;
+    -webkit-border-radius: 2px;
+    -moz-border-radius: 2px;
+    border-radius: 2px;
 
     &:focus {
       border-color: #000;
@@ -53,7 +56,20 @@ button {
     &:-moz-placeholder,
     &::-webkit-input-placeholder,
     &:-ms-input-placeholder {
-      color: #666;
+      color: #999;
+    }
+  }
+
+  .error-message {
+    color: #F00;
+    display:none;
+    float:left;
+    width: 100%;
+  }
+
+  &.has-validation-error {
+    .error-message {
+      display:inline-block;
     }
   }
 }
@@ -64,6 +80,11 @@ button {
 
 .btn {
   display: inline-block;
+
+  &:focus,
+  &:active {
+    outline: 0;
+  }
 }
 
 .btn-primary {

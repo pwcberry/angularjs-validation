@@ -12,16 +12,24 @@ module.exports = function (grunt) {
                     src: ['./lib/angular/angular.js'],
                     dest: './demo/public/javascripts'
                 }]
+            },
+            demo: {
+                files: [{
+                    expand: false,
+                    flatten: true,
+                    src: ['./src/js/*.js'],
+                    dest: './demo/public/javascripts/validation.js'
+                }]
             }
         }
 
     });
 
-    grunt.loadNpmTasks('grunt-contrib-concat');
+//    grunt.loadNpmTasks('grunt-contrib-concat');
     grunt.loadNpmTasks('grunt-contrib-copy');
     grunt.loadNpmTasks('grunt-contrib-jshint');
     grunt.loadNpmTasks('grunt-karma');
 
-    grunt.registerTask('default', ['jshint', 'concat', 'copy:lib']);
+    grunt.registerTask('default', ['jshint', 'copy']);
 
 };

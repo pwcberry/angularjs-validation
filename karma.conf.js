@@ -14,6 +14,7 @@ module.exports = function (config) {
         files: [
             'lib/angular/angular.min.js',
             'lib/angular-mocks/angular-mocks.js',
+            'lib/browserTrigger.js',
             'src/js/*.js',
             'test/*Spec.js'
         ],

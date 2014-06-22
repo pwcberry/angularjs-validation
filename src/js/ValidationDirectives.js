@@ -1,57 +1,13 @@
 (function (angular) {
 
+    /**
+     * Custom directives to handle form validation.
+     *
+     * The 'Validator' function will be moved to
+     * become a service to allow other directives to
+     * use the same code.
+     */
     angular.module('Validation', [])
-        .directive('valOnSubmit', ['$parse', function ($parse) {
-            return {
-                restrict: 'A',
-                link: function (scope, element, attr) {
-                    var fn = $parse(attr.valOnSubmit);
-                    scope.isValid = false;
-
-                    if (element[0].tagName.toLowerCase() != 'form') {
-                        throw 'val-on-submit must be attached to a form element';
-                    }
-
-                    if (attr.valOnSubmit) {
-                        element.on('submit', function (event) {
-                            console.info('submit');
-                            try {
-                                if (!scope.submitAttempted) {
-                                    scope.submitAttempted = true;
-                                }
-                                scope.validate();
-                                scope.$apply(fn(scope, {
-                                    $scope: scope,
-                                    $event: event
-                                }));
-                            } catch (e) {
-                                console.error(e);
-                            } finally {
-                                event.preventDefault();
-                            }
-                        });
-                    }
-                },
-                controller: function ($scope) {
-                    var validators = [];
-
-                    $scope.addValidator = function (validator) {
-                        validators.push(validator);
-                    };
-
-                    $scope.validate = function () {
-                        var isValid = true;
-
-                        angular.forEach(validators, function (v) {
-                            var result = v();
-                            isValid = isValid && result;
-                        });
-
-                        $scope.isValid = isValid;
-                    };
-                }
-            };
-        }])
         .directive('valRequired', function () {
             var Validator = function (element, container, validate) {
                 return function () {
@@ -76,7 +32,6 @@
                     } else {
                         message = attr.valRequired;
                     }
-                    console.info('val-required');
                     err = angular.element('<span class="error-message">' + message + '</span>');
                     element.parent().append(err);
                 },
@@ -94,14 +49,7 @@
                         return val.length > 0;
                     });
 
-                    $element.on('blur', function () {
-                        var formValidator = typeof $scope.addValidator == 'function';
-                        if ((formValidator && $scope.submitAttempted) || !formValidator) {
-                            validate();
-                        }
-                    });
-
-                    $scope.addValidator(validate);
+                    $element.on('blur', validate);
                 }
             };
         });

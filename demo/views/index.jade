@@ -6,9 +6,9 @@ block content
         .person-form(ng-controller="DemoCtrl")
             form(action="#", method="get", name="DemoForm", val-on-submit="submitForm($scope)")
                 .input-group()
-                    input(type="text", name="FirstName", ng-model="firstName", val-required="Please specify")
+                    input(type="text", autocomplete="off", name="FirstName", ng-model="firstName", val-required="Please specify")
                 .input-group
-                    input(type="text", name="LastName", ng-model="lastName", val-required="Please specify")
+                    input(type="text", autocomplete="off", name="LastName", ng-model="lastName", val-required="Please specify")
                 .form-actions
                     button(type="submit", class="btn btn-primary") Submit
 

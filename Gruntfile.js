@@ -21,8 +21,13 @@ module.exports = function (grunt) {
                     dest: './demo/public/javascripts/validation.js'
                 }]
             }
+        },
+        karma: {
+            unit: {
+                configFile:'karma.conf.js',
+                singleRun: true
+            }
         }
-
     });
 
 //    grunt.loadNpmTasks('grunt-contrib-concat');

@@ -9,7 +9,7 @@
      */
     var makeValidator = function(element, container, validate) {
         return function() {
-            var isValid = !element.hasClass('has-error') && validate(element[0]);
+            var isValid = !container.hasClass('has-validation-error') && validate(element[0]);
 
             if (!isValid) {
                 container.addClass('has-validation-error');
@@ -31,8 +31,6 @@
     var makeErrorElement = function(element, message) {
         var msg = (angular.isString(message) ? message : 'Invalid'),
             err = angular.element('<span class="error-message">' + msg + '</span>');
-        console.info('makeErrorElement');
-        console.log('message: "%s"', message);
         element.parent().append(err);
     };
 
@@ -93,16 +91,13 @@
      * @param valWatch if defined, validation will be invoked when the model updates
      * @param validationFunc the validation function to invoke
      */
-    var setBehaviour = function($scope, $element, $attr, $parse, validationFunc) {
-        var ngModelGet,
-            watching = angular.isDefined($attr.valWatch),
+    var setBehaviour = function($scope, $element, $attr, validationFunc) {
+        var watching = angular.isDefined($attr.valWatch),
             validator = makeValidator($element, $element.parent(), validationFunc);
 
         if (watching) {
-            ngModelGet = $parse($attr.ngModel);
             $scope.$watch(function() {
                 validator();
-                return ngModelGet($scope);
             });
         } else {
             // For use on forms where submission initiates validation
@@ -114,15 +109,15 @@
      * Custom directives to handle form validation.
      */
     angular.module('Validation', [])
-        .directive('valRequired', function($parse) {
+        .directive('valRequired', function() {
             return {
                 restrict: 'A',
                 link: function($scope, $element, $attr) {
                     makeErrorElement($element, $attr.valRequired);
-                    setBehaviour($scope, $element, $attr, $parse, validators.required);
+                    setBehaviour($scope, $element, $attr, validators.required);
                 }
             };
-        }).directive('valCode', function($parse) {
+        }).directive('valCode', function() {
             return {
                 restrict: 'A',
                 link: function($scope, $element, $attr) {
@@ -130,43 +125,51 @@
                         $element.prop('maxlength', parseInt($attr.valLength, 10));
                     }
                     makeErrorElement($scope, $attr.valCode);
-                    setBehaviour($scope, $element, $attr, $parse, validators.code);
+                    setBehaviour($scope, $element, $attr, validators.code);
                 }
             };
-        }).directive('valMobile', function($parse) {
+        }).directive('valMobile', function() {
             return {
                 restrict: 'A',
                 link: function($scope, $element, $attr) {
                     makeErrorElement($element, $attr.valMobile);
-                    setBehaviour($scope, $element, $attr, $parse, validators.mobile);
+                    setBehaviour($scope, $element, $attr, validators.mobile);
                 }
             };
-        }).directive('valTelephone', function($parse) {
+        }).directive('valTelephone', function() {
             return {
                 restrict: 'A',
                 link: function($scope, $element, $attr) {
                     makeErrorElement($element, $attr.valTelephone);
-                    setBehaviour($scope, $element, $attr, $parse, validators.telephone);
+                    setBehaviour($scope, $element, $attr, validators.telephone);
                 }
             };
         }).directive('valRange', function($parse) {
             /**
              * Integer range
              *
-             * <input type="text" val-range="Invalid" val-range-min="1" val-range-max="10" />
+             * <input type="text" val-range="Please enter a value from {{minValue}} to {{maxValue}}" val-range-min="1" val-range-max="10" />
              */
             return {
                 restrict: 'A',
                 scope: {},
                 link: function($scope, $element, $attr) {
                     var minValue = $parse($attr.valRangeMin)($scope),
-                        maxValue = $parse($attr.valRangeMax)($scope);
+                        maxValue = $parse($attr.valRangeMax)($scope),
+                        message = $attr.valRange;
 
                     minValue = (isNaN(minValue) ? 0 : minValue);
                     maxValue = (isNaN(maxValue) ? Number.MAX_VALUE : maxValue);
 
-                    makeErrorElement($element, $attr.valRange);
-                    setBehaviour($scope, $element, $attr, $parse, validators.range(minValue, maxValue));
+                    if (angular.isDefined(message)) {
+                        message = message.replace('{{minValue}}', minValue);
+                        if (maxValue < Number.MAX_VALUE) {
+                            message = message.replace('{{maxValue}}', maxValue);
+                        }
+                    }
+
+                    makeErrorElement($element, message);
+                    setBehaviour($scope, $element, $attr, validators.range(minValue, maxValue));
                 }
             };
         });

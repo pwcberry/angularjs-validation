@@ -278,7 +278,8 @@
                 restrict: 'A',
                 link: function ($scope, $element, $attr) {
                     var regex = $attr.valRegex,
-                        key = 'valPattern_' + $attr.ngModel;
+                        key = 'valPattern_' + $attr.ngModel,
+                        message = $attr.valPattern;
 
                     makeErrorElement($element, message, key, $scope);
                     setBehaviour($scope, $element, $attr, key, validators.pattern(regex));
@@ -294,7 +295,4 @@
             };
         });
 
-}
-(angular)
-    )
-;
+}(angular));

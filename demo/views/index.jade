@@ -4,11 +4,16 @@ block content
     .page-content(ng-app="ValidationDemo")
         h1= title
         .person-form(ng-controller="DemoCtrl")
-            form(action="#", method="get", name="DemoForm", val-on-submit="submitForm($scope)")
-                .input-group()
-                    input(type="text", autocomplete="off", name="FirstName", ng-model="firstName", val-required="Please specify")
-                .input-group
+            form(action="#", method="get", name="DemoForm", val-form, val-submit="submitForm(form)")
+                .input-group.col-12
+                    label Last Name
                     input(type="text", autocomplete="off", name="LastName", ng-model="lastName", val-required="Please specify")
+                .input-group.col-12
+                    label Telephone
+                    input(type="text", autocomplete="off", name="Telephone", ng-model="telephone", val-required="Please specify", val-telephone="Bad phone number")
+                .input-group
+                    label Code
+                    input(type="text", autocomplete="off", name="Postcode", ng-model="postcode", size="6", val-code="Invalid postcode", val-code-length="4")
                 .form-actions
                     button(type="submit", class="btn btn-primary") Submit
 

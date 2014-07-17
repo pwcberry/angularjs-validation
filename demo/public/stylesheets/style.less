@@ -38,11 +38,15 @@ button {
   float:left;
   margin-bottom: 1em;
 
+  label {
+    display:inline-block;
+    width: 100%;
+  }
+
   input[type=text]{
     padding: 0.5em 0.75em;
     color: #000;
     border:1px solid #999;
-    width: 100%;
     outline: 0;
     -webkit-border-radius: 2px;
     -moz-border-radius: 2px;
@@ -70,6 +74,12 @@ button {
   &.has-validation-error {
     .error-message {
       display:inline-block;
+    }
+  }
+
+  &.col-12 {
+    input[type="text"]{
+      width: 100%;
     }
   }
 }

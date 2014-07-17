@@ -26,15 +26,22 @@ module.exports = function(grunt) {
 			unit: {
 				configFile: 'karma.conf.js'
 			}
-		}
+		},
+        watch: {
+            dev: {
+                files: './src/js/*.js',
+                tasks: ['jshint','copy:demo']
+            }
+        }
 	});
 
 	//    grunt.loadNpmTasks('grunt-contrib-concat');
 	grunt.loadNpmTasks('grunt-contrib-copy');
 	grunt.loadNpmTasks('grunt-contrib-jshint');
+    grunt.loadNpmTasks('grunt-contrib-watch');
 	grunt.loadNpmTasks('grunt-karma');
 
 	grunt.registerTask('test', ['jshint', 'karma']);
-	grunt.registerTask('default', ['jshint', 'copy']);
+	grunt.registerTask('default', ['jshint', 'copy', 'watch']);
 
 };

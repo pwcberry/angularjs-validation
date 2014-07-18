@@ -1,28 +1,29 @@
-(function (angular) {
+(function(angular) {
 
     /*
      *  Private object to keep track of validators registered for each element.
      */
     var registeredElements = {
         fields: {},
-        add: function (key, validator) {
+        add: function(key, validator) {
             if (!angular.isArray(this.fields[key])) {
                 this.fields[key] = [];
             }
             this.fields[key].push(validator);
         },
-        validate: function (key) {
-            var isValid = true, validators = this.fields[key];
+        validate: function(key) {
+            var isValid = true,
+                validators = this.fields[key];
 
-            angular.forEach(validators, function (validator, index) {
+            angular.forEach(validators, function(validator, index) {
                 var result = index === 0 ? validator() : validator(isValid);
                 isValid = isValid && result;
             });
             return isValid;
         },
-        validateAll: function () {
+        validateAll: function() {
             var isValid = true;
-            Object.keys(this.fields).forEach(function (key) {
+            Object.keys(this.fields).forEach(function(key) {
                 var result = this.validate(key);
                 isValid = isValid && result;
             }.bind(this));
@@ -33,8 +34,8 @@
     /*
      * Private function factory to create validators.
      */
-    var makeValidator = function (element, $scope, key, validate) {
-        return function (validState) {
+    var makeValidator = function(element, $scope, key, watching, validate) {
+        return function(validState) {
             var container = element.parent(),
                 invalidStateKey = element.data('invalidKey'),
                 invalidRequired = (/^valRequired/.test(invalidStateKey)),
@@ -67,7 +68,10 @@
                     }
                 }
             }
-            $scope.$apply();
+
+            if (!watching) {
+                $scope.$apply();
+            }
 
             return isValid;
         };
@@ -78,7 +82,7 @@
      * This allows the functions to be shared amongst the directives.
      */
     var validators = {
-        required: function (el) {
+        required: function(el) {
             var val;
 
             if (el.type == 'checkbox') {
@@ -89,20 +93,20 @@
             val = el.value.trim();
             return val.length > 0;
         },
-        code: function (el) {
+        code: function(el) {
             var val = el.value.trim(),
                 maxLength = el.maxlength,
                 code = Number(val);
             return val.length === maxLength && !isNaN(code);
         },
-        mobile: function (el) {
+        mobile: function(el) {
             var reMobile = /^(04\d\d)(\d{6})$/,
                 val = el.value.replace(/\s/g, ''),
                 phone = (reMobile.test(val) && RegExp.$2);
 
             return phone && (phone.length === 6);
         },
-        telephone: function (el) {
+        telephone: function(el) {
             var reFixed = /^(0[2378]|13)([02-9]\d{7})$/,
                 val = el.value.replace(/\s/g, ''),
                 phone = (reFixed.test(val) && RegExp.$2);
@@ -113,14 +117,14 @@
                 return validators.mobile(el);
             }
         },
-        range: function (minValue, maxValue) {
-            return function (el) {
+        range: function(minValue, maxValue) {
+            return function(el) {
                 var val = parseInt(el.value.replace(/\s/g, ''), 10);
                 return !isNaN(val) && (val >= minValue && val <= maxValue);
             };
         },
-        pattern: function (pattern) {
-            return function (el) {
+        pattern: function(pattern) {
+            return function(el) {
                 var re = new RegExp(pattern.replace('\\', '\\\\')),
                     match = re.exec(el.value);
                 return match !== null && typeof match[0] == 'string';
@@ -131,24 +135,24 @@
     /*
      * Private method to set the validation display behaviour.
      */
-    var setBehaviour = function ($scope, $element, $attr, key, validationFunc) {
+    var setBehaviour = function($scope, $element, $attr, key, validationFunc) {
         var watching = angular.isDefined($attr.valWatch),
-            validator = makeValidator($element, $scope, key, validationFunc),
+            validator = makeValidator($element, $scope, key, watching, validationFunc),
             name = key.split('_')[1];
 
         $scope[key] = false;
 
         if (watching) {
-            $scope.$watch(function () {
+            $scope.$watch(function() {
                 validator();
             });
         } else {
             // For use on forms where submission initiates validation
-            $scope.$watch('formValidationEnabled', function (newVal) {
+            $scope.$watch('formValidationEnabled', function(newVal) {
                 if (typeof newVal == 'boolean' && newVal) {
                     registeredElements.add(name, validator);
 
-                    $element.on('blur', function () {
+                    $element.on('blur', function() {
                         if (!$scope.firstValidation) {
                             registeredElements.validate(name);
                         }
@@ -162,10 +166,10 @@
      * Custom directives to handle form validation.
      */
     angular.module('Validation', [])
-        .directive('valForm', function ($parse) {
+        .directive('valForm', function($parse) {
             return {
                 restrict: 'A',
-                link: function ($scope, $element, $attr) {
+                link: function($scope, $element, $attr) {
                     var submitHandler;
 
                     // Flag to determine if element should
@@ -180,43 +184,41 @@
                     if ($element[0].tagName.toUpperCase() === 'FORM') {
                         $scope.formValidationEnabled = true;
                         submitHandler = $parse($attr.valSubmit);
-                        $element.on('submit', function (ev) {
-                                try {
-                                    if ($scope.firstValidation) {
-                                        $scope.firstValidation = false;
-                                    }
-                                    if (registeredElements.validateAll()) {
-                                        $scope.$apply(function () {
-                                            submitHandler($scope, {form: $element});
+                        $element.on('submit', function(ev) {
+                            try {
+                                if ($scope.firstValidation) {
+                                    $scope.firstValidation = false;
+                                }
+                                if (registeredElements.validateAll()) {
+                                    $scope.$apply(function() {
+                                        submitHandler($scope, {
+                                            form: $element
                                         });
-                                    }
+                                    });
                                 }
-                                catch (e) {
-                                    console.error(e);
-                                }
-                                finally {
-                                    ev.preventDefault();
-                                }
+                            } catch (e) {
+                                console.error(e);
+                            } finally {
+                                ev.preventDefault();
                             }
-                        )
-                        ;
+                        });
                     }
                 }
             };
         })
-        .directive('valRequired', function (makeErrorElement) {
+        .directive('valRequired', function(makeErrorElement) {
             return {
                 restrict: 'A',
-                link: function ($scope, $element, $attr) {
+                link: function($scope, $element, $attr) {
                     var key = 'valRequired_' + $attr.ngModel;
                     makeErrorElement($element, $attr.valRequired, key, $scope);
                     setBehaviour($scope, $element, $attr, key, validators.required);
                 }
             };
-        }).directive('valCode', function (makeErrorElement) {
+        }).directive('valCode', function(makeErrorElement) {
             return {
                 restrict: 'A',
-                link: function ($scope, $element, $attr) {
+                link: function($scope, $element, $attr) {
                     var key = 'valCode_' + $attr.ngModel;
                     if (angular.isDefined($attr.valCodeLength)) {
                         $element.prop('maxlength', parseInt($attr.valCodeLength, 10));
@@ -225,25 +227,25 @@
                     setBehaviour($scope, $element, $attr, key, validators.code);
                 }
             };
-        }).directive('valMobile', function (makeErrorElement) {
+        }).directive('valMobile', function(makeErrorElement) {
             return {
                 restrict: 'A',
-                link: function ($scope, $element, $attr) {
+                link: function($scope, $element, $attr) {
                     var key = 'valMobile_' + $attr.ngModel;
                     makeErrorElement($element, $attr.valMobile, key, $scope);
                     setBehaviour($scope, $element, $attr, key, validators.mobile);
                 }
             };
-        }).directive('valTelephone', function (makeErrorElement) {
+        }).directive('valTelephone', function(makeErrorElement) {
             return {
                 restrict: 'A',
-                link: function ($scope, $element, $attr) {
+                link: function($scope, $element, $attr) {
                     var key = 'valTelephone_' + $attr.ngModel;
                     makeErrorElement($element, $attr.valTelephone, key, $scope);
                     setBehaviour($scope, $element, $attr, key, validators.telephone);
                 }
             };
-        }).directive('valRange', function ($parse, makeErrorElement) {
+        }).directive('valRange', function($parse, makeErrorElement) {
             /**
              * Integer range
              *
@@ -253,7 +255,7 @@
              */
             return {
                 restrict: 'A',
-                link: function ($scope, $element, $attr) {
+                link: function($scope, $element, $attr) {
                     var minValue = $parse($attr.valRangeMin)(),
                         maxValue = $parse($attr.valRangeMax)(),
                         message = $attr.valRange,
@@ -273,10 +275,10 @@
                     setBehaviour($scope, $element, $attr, key, validators.range(minValue, maxValue));
                 }
             };
-        }).directive('valPattern', function (makeErrorElement) {
+        }).directive('valPattern', function(makeErrorElement) {
             return {
                 restrict: 'A',
-                link: function ($scope, $element, $attr) {
+                link: function($scope, $element, $attr) {
                     var regex = $attr.valRegex,
                         key = 'valPattern_' + $attr.ngModel,
                         message = $attr.valPattern;
@@ -285,10 +287,10 @@
                     setBehaviour($scope, $element, $attr, key, validators.pattern(regex));
                 }
             };
-        }).factory('makeErrorElement', function ($compile) {
+        }).factory('makeErrorElement', function($compile) {
             // Private function to add the error element to the container with the target input element.
             // Declared here to manage the $compile dependency (rather than having every directive having to declare it).
-            return function (element, message, key, $scope) {
+            return function(element, message, key, $scope) {
                 var msg = (angular.isString(message) ? message : 'Invalid'),
                     err = $compile('<span class="error-message" ng-show="' + key + '">' + msg + '</span>')($scope);
                 element.parent().append(err);

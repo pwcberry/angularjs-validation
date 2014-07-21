@@ -1,35 +1,104 @@
 (function(angular) {
 
     /*
-     *  Private object to keep track of validators registered for each element.
+     * Private object that defines the validation functions.
+     * This allows the functions to be shared amongst the directives.
      */
-    var registeredElements = {
-        fields: {},
+    var validators = {
+        required: function (el) {
+            var val;
+
+            if (el.type == 'checkbox') {
+                return el.checked;
+            } else if (el.type == 'file') {
+                return el.files.length;
+            }
+            val = el.value.trim();
+            return val.length > 0;
+        },
+        code: function (el) {
+            var val = el.value.trim(),
+                maxLength = el.maxlength,
+                code = Number(val);
+            return val.length === maxLength && !isNaN(code);
+        },
+        mobile: function (el) {
+            var reMobile = /^(04\d\d)(\d{6})$/,
+                val = el.value.replace(/\s/g, ''),
+                phone = (reMobile.test(val) && RegExp.$2);
+
+            return phone && (phone.length === 6);
+        },
+        telephone: function (el) {
+            var reFixed = /^(0[2378]|13)([02-9]\d{7})$/,
+                val = el.value.replace(/\s/g, ''),
+                phone = (reFixed.test(val) && RegExp.$2);
+
+            if (phone && phone.length === 8) {
+                return true;
+            } else {
+                return validators.mobile(el);
+            }
+        },
+        range: function (minValue, maxValue) {
+            return function (el) {
+                var val = parseInt(el.value.replace(/\s/g, ''), 10);
+                return !isNaN(val) && (val >= minValue && val <= maxValue);
+            };
+        },
+        pattern: function (pattern) {
+            return function (el) {
+                var re = new RegExp(pattern.replace('\\', '\\\\')),
+                    match = re.exec(el.value);
+                return match !== null && typeof match[0] == 'string';
+            };
+        },
+        email: function () {
+            return function (el) {
+                var val = el.value.trim(),
+                    reEmail = new RegExp('[a-z0-9!#$%&\u0027*+/=?^_`{|}~-]+(?:\u002e[a-z0-9!#$%&\u0027*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\u002e)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])');
+
+                return reEmail.test(val);
+            };
+        }
+    };
+
+    /*
+     *  Private object to keep track of validators registered for each form.
+     */
+    var registeredForms = {};
+
+    var FormValidation = (function () {
+        function FormValidation() {
+            this.fields = {};
+            this.firstValidation = false;
+        }
+
+        FormValidation.prototype = {
         add: function(key, validator) {
             if (!angular.isArray(this.fields[key])) {
                 this.fields[key] = [];
             }
             this.fields[key].push(validator);
         },
-        validate: function(key) {
-            var isValid = true,
-                validators = this.fields[key];
+            validate: function () {
+                var isFormValid = true, self = this;
+                Object.keys(this.fields).forEach(function (key) {
+                    var isValid, validators = self.fields[key];
 
-            angular.forEach(validators, function(validator, index) {
+                    validators.forEach(function (validator, index) {
                 var result = index === 0 ? validator() : validator(isValid);
-                isValid = isValid && result;
+                        isValid = (typeof isValid == 'boolean') ? (isValid && result) : result;
             });
-            return isValid;
-        },
-        validateAll: function() {
-            var isValid = true;
-            Object.keys(this.fields).forEach(function(key) {
-                var result = this.validate(key);
-                isValid = isValid && result;
+                    isFormValid = isFormValid && isValid;
             }.bind(this));
-            return isValid;
+
+                return isFormValid;
         }
     };
+
+        return FormValidation;
+    })();
 
     /*
      * Private function factory to create validators.
@@ -77,77 +146,37 @@
         };
     };
 
-    /*
-     * Private object that contains the definitions of the validation functions.
-     * This allows the functions to be shared amongst the directives.
-     */
-    var validators = {
-        required: function(el) {
-            var val;
+    var registerForValidation = function (form) {
+        var name;
 
-            if (el.type == 'checkbox') {
-                return el.checked;
-            } else if (el.type == 'file') {
-                return el.files.length;
+        if (form && form.tagName.toUpperCase() === 'FORM') {
+            name = form.name;
+
+            if (!form.name) {
+                name = form.id || ('form_' + (+new Date()));
+                form.name = name;
             }
-            val = el.value.trim();
-            return val.length > 0;
-        },
-        code: function(el) {
-            var val = el.value.trim(),
-                maxLength = el.maxlength,
-                code = Number(val);
-            return val.length === maxLength && !isNaN(code);
-        },
-        mobile: function(el) {
-            var reMobile = /^(04\d\d)(\d{6})$/,
-                val = el.value.replace(/\s/g, ''),
-                phone = (reMobile.test(val) && RegExp.$2);
 
-            return phone && (phone.length === 6);
-        },
-        telephone: function(el) {
-            var reFixed = /^(0[2378]|13)([02-9]\d{7})$/,
-                val = el.value.replace(/\s/g, ''),
-                phone = (reFixed.test(val) && RegExp.$2);
-
-            if (phone && phone.length === 8) {
-                return true;
-            } else {
-                return validators.mobile(el);
+            if (!registeredForms.hasOwnProperty(name)) {
+                registeredForms[name] = new FormValidation();
             }
-        },
-        range: function(minValue, maxValue) {
-            return function(el) {
-                var val = parseInt(el.value.replace(/\s/g, ''), 10);
-                return !isNaN(val) && (val >= minValue && val <= maxValue);
-            };
-        },
-        pattern: function(pattern) {
-            return function(el) {
-                var re = new RegExp(pattern.replace('\\', '\\\\')),
-                    match = re.exec(el.value);
-                return match !== null && typeof match[0] == 'string';
-            };
-        },
-        email: function () {
-            return function (el) {
-                var val = el.value.trim(),
-                    reEmail = new RegExp('[a-z0-9!#$%&\u0027*+/=?^_`{|}~-]+(?:\u002e[a-z0-9!#$%&\u0027*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\u002e)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])');
 
-                return reEmail.test(val);
-            };
+            return registeredForms[name];
         }
+
+        return null;
     };
 
     /*
      * Private method to set the validation display behaviour.
      */
     var setBehaviour = function($scope, $element, $attr, key, validationFunc) {
-        var watching = angular.isDefined($attr.valWatch),
+        var registeredForm,
+            watching = angular.isDefined($attr.valWatch),
             validator = makeValidator($element, $scope, key, watching, validationFunc),
             name = key.split('_')[1];
 
+        // Initialize the state of the element's validator
         $scope[key] = false;
 
         if (watching) {
@@ -155,18 +184,16 @@
                 validator();
             });
         } else {
-            // For use on forms where submission initiates validation
-            $scope.$watch('formValidationEnabled', function(newVal) {
-                if (typeof newVal == 'boolean' && newVal) {
-                    registeredElements.add(name, validator);
+            registeredForm = registerForValidation($element[0].form);
+            if (registeredForm) {
+                registeredForm.add(name, validator);
 
                     $element.on('blur', function() {
-                        if (!$scope.firstValidation) {
-                            registeredElements.validate(name);
+                    if (!registeredForm.firstValidation) {
+                        validator();
                         }
                     });
                 }
-            });
         }
     };
 
@@ -178,26 +205,23 @@
             return {
                 restrict: 'A',
                 link: function($scope, $element, $attr) {
-                    var submitHandler;
+                    var submitHandler,
+                        registeredForm = registerForValidation($element[0]);
+
+                    if (registeredForm) {
 
                     // Flag to determine if element should
                     // apply validation when user moves away from target element
                     // after the first attempt at form submission
-                    $scope.firstValidation = true;
+                        registeredForm.firstValidation = true;
 
-                    // Flag for elements to add their validator to the array
-                    // for form validation
-                    $scope.formValidationEnabled = false;
-
-                    if ($element[0].tagName.toUpperCase() === 'FORM') {
-                        $scope.formValidationEnabled = true;
                         submitHandler = $parse($attr.valSubmit);
                         $element.on('submit', function(ev) {
                             try {
-                                if ($scope.firstValidation) {
-                                    $scope.firstValidation = false;
+                                if (registeredForm.firstValidation) {
+                                    registeredForm.firstValidation = false;
                                 }
-                                if (registeredElements.validateAll()) {
+                                if (registeredForm.validate()) {
                                     $scope.$apply(function() {
                                             submitHandler($scope, {form: $element});
                                     });

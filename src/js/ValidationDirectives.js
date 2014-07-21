@@ -129,6 +129,14 @@
                     match = re.exec(el.value);
                 return match !== null && typeof match[0] == 'string';
             };
+        },
+        email: function () {
+            return function (el) {
+                var val = el.value.trim(),
+                    reEmail = new RegExp('[a-z0-9!#$%&\u0027*+/=?^_`{|}~-]+(?:\u002e[a-z0-9!#$%&\u0027*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\u002e)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])');
+
+                return reEmail.test(val);
+            };
         }
     };
 
@@ -191,9 +199,7 @@
                                 }
                                 if (registeredElements.validateAll()) {
                                     $scope.$apply(function() {
-                                        submitHandler($scope, {
-                                            form: $element
-                                        });
+                                            submitHandler($scope, {form: $element});
                                     });
                                 }
                             } catch (e) {
@@ -285,6 +291,29 @@
 
                     makeErrorElement($element, message, key, $scope);
                     setBehaviour($scope, $element, $attr, key, validators.pattern(regex));
+                }
+            };
+        }).directive('valEmail', function (makeErrorElement) {
+            return {
+                restrict: 'A',
+                link: function ($scope, $element, $attr) {
+                    var key = 'valEmail_' + $attr.ngModel,
+                        message = $attr.valEmail;
+
+                    makeErrorElement($element, message, key, $scope);
+                    setBehaviour($scope, $element, $attr, key, validators.email());
+                }
+            };
+        }).directive('preventTabNext', function () {
+            return {
+                restrict: 'A',
+                link: function ($scope, $element) {
+                    $element.on('keydown', function (ev) {
+                        if (ev.which === 9) {
+                            ev.preventDefault();
+                            ev.stopPropagation();
+                        }
+                    });
                 }
             };
         }).factory('makeErrorElement', function($compile) {

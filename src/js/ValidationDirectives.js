@@ -18,7 +18,7 @@
         },
         code: function (el) {
             var val = el.value.trim(),
-                maxLength = el.maxlength,
+                maxLength = el.maxLength,
                 code = Number(val);
             return val.length === maxLength && !isNaN(code);
         },
@@ -251,7 +251,7 @@
                 link: function($scope, $element, $attr) {
                     var key = 'valCode_' + $attr.ngModel;
                     if (angular.isDefined($attr.valCodeLength)) {
-                        $element.prop('maxlength', parseInt($attr.valCodeLength, 10));
+                        $element[0].maxLength = parseInt($attr.valCodeLength, 10);
                     }
                     makeErrorElement($element, $attr.valCode, key, $scope);
                     setBehaviour($scope, $element, $attr, key, validators.code);

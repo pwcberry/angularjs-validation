@@ -60,6 +60,16 @@
 
                 return reEmail.test(val);
             };
+        },
+        matchWith: function($parse, $scope, model) {
+            return function(el) {
+                var value = el.value, compareWith = $parse(model)($scope);
+                if (!value || typeof compareWith == 'undefined') {
+                    return true;
+                } else {
+                    return value.trim() == compareWith.trim();
+                }
+            };
         }
     };
 
@@ -69,24 +79,28 @@
     var registeredForms = {};
 
     var FormValidation = (function () {
-        function FormValidation() {
+        function FormValidation(name) {
+            this.name = name;
             this.fields = {};
             this.firstValidation = false;
+            this.fieldsAreSet = false;
         }
 
         FormValidation.prototype = {
         add: function(key, validator) {
+                if (!this.fieldsAreSet) {
             if (!angular.isArray(this.fields[key])) {
                 this.fields[key] = [];
             }
             this.fields[key].push(validator);
+                }
         },
             validate: function () {
                 var isFormValid = true, self = this;
                 Object.keys(this.fields).forEach(function (key) {
-                    var isValid, validators = self.fields[key];
+                    var isValid, vals = self.fields[key];
 
-                    validators.forEach(function (validator, index) {
+                    vals.forEach(function (validator, index) {
                 var result = index === 0 ? validator() : validator(isValid);
                         isValid = (typeof isValid == 'boolean') ? (isValid && result) : result;
             });
@@ -149,16 +163,21 @@
     var registerForValidation = function (form) {
         var name;
 
+        // Generate unique key for the form to be validated.
+        // The directives will use this as a reference.
         if (form && form.tagName.toUpperCase() === 'FORM') {
             name = form.name;
 
-            if (!form.name) {
-                name = form.id || ('form_' + (+new Date()));
-                form.name = name;
+            if (!registeredForms.hasOwnProperty(name)) {
+                if (angular.isUndefined(name)) {
+                    name = ((form.id || 'form') + '_' + (+new Date()));
+                } else {
+                    name = name + '_' + (+new Date());
             }
 
-            if (!registeredForms.hasOwnProperty(name)) {
-                registeredForms[name] = new FormValidation();
+                form.name = name;
+
+                registeredForms[name] = new FormValidation(name);
             }
 
             return registeredForms[name];
@@ -221,6 +240,9 @@
                                 if (registeredForm.firstValidation) {
                                     registeredForm.firstValidation = false;
                                 }
+                                if (!registeredForm.fieldsAreSet) {
+                                    registeredForm.fieldsAreSet = true;
+                                }
                                 if (registeredForm.validate()) {
                                     $scope.$apply(function() {
                                             submitHandler($scope, {form: $element});
@@ -240,7 +262,7 @@
             return {
                 restrict: 'A',
                 link: function($scope, $element, $attr) {
-                    var key = 'valRequired_' + $attr.ngModel;
+                    var key = 'valRequired_' + $attr.ngModel.replace('.','_');
                     makeErrorElement($element, $attr.valRequired, key, $scope);
                     setBehaviour($scope, $element, $attr, key, validators.required);
                 }
@@ -249,7 +271,7 @@
             return {
                 restrict: 'A',
                 link: function($scope, $element, $attr) {
-                    var key = 'valCode_' + $attr.ngModel;
+                    var key = 'valCode_' + $attr.ngModel.replace('.','_');
                     if (angular.isDefined($attr.valCodeLength)) {
                         $element[0].maxLength = parseInt($attr.valCodeLength, 10);
                     }
@@ -261,7 +283,7 @@
             return {
                 restrict: 'A',
                 link: function($scope, $element, $attr) {
-                    var key = 'valMobile_' + $attr.ngModel;
+                    var key = 'valMobile_' + $attr.ngModel.replace('.','_');
                     makeErrorElement($element, $attr.valMobile, key, $scope);
                     setBehaviour($scope, $element, $attr, key, validators.mobile);
                 }
@@ -270,7 +292,7 @@
             return {
                 restrict: 'A',
                 link: function($scope, $element, $attr) {
-                    var key = 'valTelephone_' + $attr.ngModel;
+                    var key = 'valTelephone_' + $attr.ngModel.replace('.','_');
                     makeErrorElement($element, $attr.valTelephone, key, $scope);
                     setBehaviour($scope, $element, $attr, key, validators.telephone);
                 }
@@ -289,7 +311,7 @@
                     var minValue = $parse($attr.valRangeMin)(),
                         maxValue = $parse($attr.valRangeMax)(),
                         message = $attr.valRange,
-                        key = 'valRange_' + $attr.ngModel;
+                        key = 'valRange_' + $attr.ngModel.replace('.','_');
 
                     minValue = (isNaN(minValue) ? 0 : minValue);
                     maxValue = (isNaN(maxValue) ? Number.MAX_VALUE : maxValue);
@@ -310,7 +332,7 @@
                 restrict: 'A',
                 link: function($scope, $element, $attr) {
                     var regex = $attr.valRegex,
-                        key = 'valPattern_' + $attr.ngModel,
+                        key = 'valPattern_' + $attr.ngModel.replace('.','_'),
                         message = $attr.valPattern;
 
                     makeErrorElement($element, message, key, $scope);
@@ -321,13 +343,25 @@
             return {
                 restrict: 'A',
                 link: function ($scope, $element, $attr) {
-                    var key = 'valEmail_' + $attr.ngModel,
+                    var key = 'valEmail_' + $attr.ngModel.replace('.','_'),
                         message = $attr.valEmail;
 
                     makeErrorElement($element, message, key, $scope);
                     setBehaviour($scope, $element, $attr, key, validators.email());
                 }
             };
+        }).directive('valMatch', function($parse, makeErrorElement) {
+        return {
+          restrict: 'A',
+            link: function($scope, $element, $attr) {
+                var key = 'valEmail_' + $attr.ngModel.replace('.','_'),
+                    message = $attr.valMatch,
+                    matchWith = $attr.valMatchWith;
+
+                makeErrorElement($element, message, key, $scope);
+                setBehaviour($scope, $element, $attr, key, validators.matchWith($parse, $scope, matchWith));
+            }
+        };
         }).directive('preventTabNext', function () {
             return {
                 restrict: 'A',

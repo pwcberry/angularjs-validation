@@ -1,3 +1,15 @@
+.clearfix() {
+  *zoom: 1;
+  &:before,
+  &:after {
+    display: table;
+    content: "";
+  }
+  &:after {
+    clear: both;
+  }
+}
+
 * {
   -moz-box-sizing: border-box;
   box-sizing: border-box;
@@ -37,7 +49,7 @@ button {
   float: left;
   margin-bottom: 1em;
 
-  label {
+  >  label {
     display: inline-block;
     width: 100%;
   }
@@ -70,12 +82,6 @@ button {
     width: 100%;
   }
 
-  &.has-validation-error {
-    .error-message {
-      display: inline-block;
-    }
-  }
-
   &.col-12 {
     width: 100%;
   }
@@ -86,6 +92,97 @@ button {
 
   &.col-6 {
     width: 50%;
+  }
+}
+
+.has-validation-error {
+  .error-message {
+    display: inline-block;
+  }
+}
+
+.row {
+  width: 100%;
+  .clearfix;
+}
+
+.radio-button-group {
+  float: left;
+  margin-right: 10px;
+  position: relative;
+
+  &.has-validation-error {
+    padding-bottom: 30px;
+
+    .error-message {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 200px;
+    }
+  }
+
+  input[type=radio] {
+    display: inline-block;
+    float:left;
+
+    + label {
+      float:left;
+      display: inline-block;
+      cursor:pointer;
+    }
+  }
+}
+
+.checkbox-button-group {
+  float: left;
+  margin-right: 10px;
+  position: relative;
+
+  &.has-validation-error {
+    padding-bottom: 30px;
+
+    .error-message {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 200px;
+    }
+  }
+
+  input[type=checkbox] {
+    display: inline-block;
+    float:left;
+
+    + label {
+      float:left;
+      display: inline-block;
+      cursor:pointer;
+    }
+  }
+}
+
+.colour-box {
+  display:inline-block;
+  width: 16px;
+  height: 16px;
+  background-color: white;
+  border: 1px solid black;
+
+  &.red {
+    background-color: #FF4b32;
+  }
+
+  &.blue {
+    background-color: #000088;
+  }
+
+  &.yellow {
+    background-color: #ffc520;
+  }
+
+  &.green {
+    background-color: #008800;
   }
 }
 

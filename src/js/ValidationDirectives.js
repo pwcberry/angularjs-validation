@@ -94,6 +94,41 @@
                 var value = el.value.trim();
                 return value.length >= minValue && value.length <= maxValue;
             };
+        },
+        radioGroup: function ($parse, $scope, model) {
+            return function () {
+                var value = $parse(model)($scope);
+                return angular.isDefined(value);
+            };
+        },
+        checkbox: function () {
+            return function (el) {
+                var result = el.checked;
+                return result;
+            };
+        },
+        checkboxGroup: function ($parse, $scope, model) {
+            return function (el) {
+                var isValid = false, checkboxes, modelValue = $parse(model)($scope);
+
+                if (!angular.isArray(modelValue)) {
+                    checkboxes = el.form[el.name];
+                    angular.forEach(checkboxes, function (chk) {
+                        if (chk.checked) {
+                            isValid = true;
+                            return false;
+                        }
+                    });
+                } else if (modelValue.length) {
+                    isValid = true;
+                    angular.forEach(modelValue, function (item) {
+                        var check = item != null && ((typeof item == 'boolean' && item) || (angular.isString(item) && item.length));
+                        isValid = isValid && check;
+                    });
+                }
+
+                return isValid;
+            };
         }
     };
 
@@ -218,14 +253,15 @@
      */
     var setBehaviour = function ($scope, $element, $attr, key, validationFunc) {
         var registeredForm,
-            watching = angular.isDefined($attr.valWatch),
+            checkable = ((/radio|checkbox/).test($element[0].type)),
+            watching = (angular.isDefined($attr.valWatch) || checkable),
             validator = makeValidator($element, $scope, key, watching, validationFunc),
             name = key.substr(key.indexOf('_') + 1);
 
         // Initialize the state of the element's validator
         $scope[key] = false;
 
-        if (watching) {
+        if (watching && !checkable) {
             $scope.$watch(function () {
                 validator();
             });
@@ -235,11 +271,23 @@
             if (registeredForm) {
                 registeredForm.add(name, validator);
 
-                $element.on('blur', function () {
-                    if (!registeredForm.firstValidation) {
-                        validator();
-                    }
-                });
+                // Checking for the blur event doesn't make sense with radio buttons.
+                // When a user is using the keyboard to navigate radio buttons,
+                // because only one radio button from the group is actually known to the directive.
+                if (!checkable) {
+                    $element.on('blur', function () {
+                        if (!registeredForm.firstValidation) {
+                            validator();
+                        }
+                    });
+                } else {
+                    // When the radio button changes, we need to remove any validation errors
+                    $scope.$watch(function () {
+                        if (!registeredForm.firstValidation) {
+                            validator();
+                        }
+                    });
+                }
             }
         }
     };
@@ -253,6 +301,21 @@
      */
     angular.module('Validation', [])
         .directive('valForm', function ($parse) {
+            /**
+             * Specify that submission of a form is the first step of validation. Subsequent validation is performed when the input field changes.
+             *
+             * This directive also supresses the submit event. To handle the event, attach a function to the "val-submit" attribute.
+             * The parameter "form" can be passed into the function so the function body has a reference to the form submitted.
+             *
+             * For form submission to work correctly, a button such as <button type="submit"></button> or <input type="submit"/> as a
+             * descendent of the form needs to be included in the form's HTML structure.
+             *
+             * Sample usage:
+             *
+             * <form name="SignIn" val-form val-submit="signIn(form")>
+             *     <!-- form contents -->
+             * </form>
+             */
             return {
                 restrict: 'A',
                 link: function ($scope, $element, $attr) {
@@ -291,6 +354,13 @@
             };
         })
         .directive('valRequired', function (makeErrorElement) {
+            /**
+             * Validate an input to ensure it has a value, thus complying with its mandatory status.
+             *
+             * Sample usage:
+             *
+             * <input type="text" ng-model="member.FirstName" val-required="Please enter your first name" />
+             */
             return {
                 restrict: 'A',
                 link: function ($scope, $element, $attr) {
@@ -300,6 +370,18 @@
                 }
             };
         }).directive('valCode', function (makeErrorElement) {
+            /**
+             * Validate a numeric code.
+             *
+             * The maximum length of the code can be specified by the attribute val-code-length,
+             * or by adding the "maxlength" attribute of the <input/> element.
+             *
+             * Used for SMS verification.
+             *
+             * Sample usage:
+             *
+             * <input type="text" maxlength="4" ng-model="code" val-code="Invalid code" />
+             */
             return {
                 restrict: 'A',
                 link: function ($scope, $element, $attr) {
@@ -312,6 +394,13 @@
                 }
             };
         }).directive('valMobile', function (makeErrorElement) {
+            /**
+             * Validate an Australian mobile number.
+             *
+             * Sample usage:
+             *
+             * <input type="text" ng-model="profile.MobilePhone" val-mobile="Invalid mobile number" />
+             */
             return {
                 restrict: 'A',
                 link: function ($scope, $element, $attr) {
@@ -321,6 +410,13 @@
                 }
             };
         }).directive('valTelephone', function (makeErrorElement) {
+            /**
+             * Validate an Australian land-line or mobile phone number.
+             *
+             * Sample usage:
+             *
+             * <input type="text" ng-model="phone" val-telephone="Invalid phone number" />
+             */
             return {
                 restrict: 'A',
                 link: function ($scope, $element, $attr) {
@@ -331,11 +427,11 @@
             };
         }).directive('valRange', function ($parse, makeErrorElement) {
             /**
-             * Validate a number according to a specified range
+             * Validate a number according to a specified range.
              *
              * Sample usage:
              *
-             * <input type="text" val-range="Please enter a value from 1 to 10" val-range-min="1" val-range-max="10" />
+             * <input type="text" ng-model="age" val-range="Please enter a value from 18 to 80" val-range-min="18" val-range-max="80" />
              */
             return {
                 restrict: 'A',
@@ -353,6 +449,13 @@
                 }
             };
         }).directive('valPattern', function (makeErrorElement) {
+            /**
+             * Validate an input according to a specified regular expression pattern.
+             *
+             * Sample usage:
+             *
+             * <input type="text" ng-model="
+             */
             return {
                 restrict: 'A',
                 link: function ($scope, $element, $attr) {
@@ -364,6 +467,13 @@
                 }
             };
         }).directive('valEmail', function (makeErrorElement) {
+            /**
+             * Validate an email address.
+             *
+             * Sample usage:
+             *
+             * <input type="text" ng-model="email" val-email="Invalid email" />
+             */
             return {
                 restrict: 'A',
                 link: function ($scope, $element, $attr) {
@@ -374,10 +484,17 @@
                 }
             };
         }).directive('valMatch', function ($parse, makeErrorElement) {
+            /**
+             * Validate an input by comparing (or matching) with the value of another model binding.
+             *
+             * Sample usage:
+             *
+             * <input type="text" val-match="The password fields do not match" val-match-with="password" ng-model="confirmPassword" />
+             */
             return {
                 restrict: 'A',
                 link: function ($scope, $element, $attr) {
-                    var key = makeKey('valEmail', $attr.ngModel),
+                    var key = makeKey('valMatch', $attr.ngModel),
                         matchWith = $attr.valMatchWith;
 
                     makeErrorElement($element, $attr.valMatch, key, $scope);
@@ -385,6 +502,15 @@
                 }
             };
         }).directive('valNumber', function (makeErrorElement) {
+            /**
+             * Validate the input to determine if it is an integer or a float (decimal).
+             *
+             * The default number type is integer.
+             *
+             * Sample usage:
+             *
+             * <input type="text" ng-model="price" val-number="Invalid price" val-number-type="float" />
+             */
             return {
                 restrict: 'A',
                 link: function ($scope, $element, $attr) {
@@ -397,13 +523,13 @@
             };
         }).directive('valLength', function ($parse, makeErrorElement) {
             /**
-             * Validate the length of a string according to minimum or maximum length requirements.
+             * Validate the length of an input value according to minimum or maximum length requirements.
              *
              * If neither minimum or maximum length are specified, validation passes.
              *
              * Sample usage:
              *
-             * <input type="text" val-length="Please enter text from 1 to 10 characters" val-length-min="1" val-length-max="10" />
+             * <input type="text" ng-model="productTitle" val-length="Please enter text from 1 to 10 characters" val-length-min="1" val-length-max="10" />
              */
             return {
                 restrict: 'A',
@@ -420,7 +546,69 @@
                     setBehaviour($scope, $element, $attr, key, validationRules.textLength(minLength, maxLength));
                 }
             };
+        }).directive('valRadio', function ($parse, makeErrorElement) {
+            /**
+             * Validate a group of radio buttons, that have the same name or model, to ensure one is selected.
+             *
+             * Only one radio button in the group requires the directive.
+             *
+             * Sample usage:
+             *
+             * <input type="radio" ng-model="gender" value="male" val-radio="Please select male or female"/>
+             * <input type="radio" ng-model="gender" value="female" />
+             */
+            return {
+                restrict: 'A',
+                link: function ($scope, $element, $attr) {
+                    var key = makeKey('valRadio', $attr.ngModel);
+
+                    makeErrorElement($element, $attr.valRadio, key, $scope);
+                    setBehaviour($scope, $element, $attr, key, validationRules.radioGroup($parse, $scope, $attr.ngModel));
+                }
+            };
+        }).directive('valCheckbox', function ($parse, makeErrorElement) {
+            /**
+             * Validate a checkbox to ensure it has been selected.
+             *
+             * Sample usage:
+             *
+             * <input type="checkbox" ng-model="termsAndConditions" ng-true-value="true" val-checkbox="Please confirm you've read the terms and conditions"/>
+             */
+            return {
+                restrict: 'A',
+                link: function ($scope, $element, $attr) {
+                    var key = makeKey('valCheckbox', $attr.ngModel);
+
+                    makeErrorElement($element, $attr.valCheckbox, key, $scope);
+                    setBehaviour($scope, $element, $attr, key, validationRules.checkbox());
+                }
+            }
+        }).directive('valCheckboxGroup', function ($parse, makeErrorElement) {
+            /**
+             * Validate a group of checkboxes to ensure at least one has been selected.
+             *
+             * The model for the group can be an array, or each checkbox must have the same "name" attribute value and different model bindings.
+             *
+             * Sample usage:
+             *
+             * <input type="checkbox" ng-model="food[0]" ng-true-value="chicken" val-checkbox-group="Please specify your meat course"/>
+             * <input type="checkbox" ng-model="food[1]" ng-true-value="lamb" />
+             * <input type="checkbox" ng-model="food[2]" ng-true-value="fish" />
+             */
+            return {
+                link: function ($scope, $element, $attr) {
+                    var name = angular.isDefined($attr.ngModel) ? $attr.ngModel : $element[0].name,
+                        key = makeKey('valCheckboxGroup', name.replace(/\[\d+\]/, '')),
+                        modelArrayName = angular.isDefined($attr.ngModel) ? $attr.ngModel.replace(/\[\d+\]/, '') : '';
+
+                    makeErrorElement($element, $attr.valCheckboxGroup, key, $scope);
+                    setBehaviour($scope, $element, $attr, key, validationRules.checkboxGroup($parse, $scope, modelArrayName));
+                }
+            };
         }).directive('preventTabNext', function () {
+            /**
+             * Prevent the user from tabbing to the next element in the tab-index sequence.
+             */
             return {
                 restrict: 'A',
                 link: function ($scope, $element) {

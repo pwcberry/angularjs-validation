@@ -11,10 +11,12 @@ var Validation = (function () {
         },
         assert: {
             expectValidationError: function (input) {
-                expect(input.parent()[0].className).to.contain('has-validation-error');
+                var parent = typeof input.parent == 'function' ? (input.parent()[0]) : input.parentNode;
+                expect(parent.className).to.contain('has-validation-error');
             },
             expectValidationPass: function(input) {
-                expect(input.parent()[0].className).to.not.contain('has-validation-error');
+                var parent = typeof input.parent == 'function' ? (input.parent()[0]) : input.parentNode;
+                expect(parent.className).to.not.contain('has-validation-error');
             }
         }
     };

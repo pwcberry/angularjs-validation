@@ -1,26 +1,28 @@
-module.exports = function(config) {
-	config.set({
+module.exports = function (config) {
+    config.set({
 
-		basePath: '',
+        basePath: '',
 
-		frameworks: ['mocha', 'chai'],
+        frameworks: ['mocha', 'chai'],
 
-		files: [
-			'lib/angular/angular.min.js',
-			'lib/angular-mocks/angular-mocks.js',
-			'lib/browserTrigger.js',
-			'src/js/*.js',
-			'test/*Spec.js'
-		],
+        /* PhantomJS requires a shim for Function.prototype.bind */
+        files: [
+            'lib/es5-shim/es5-shim.min.js',
+            'lib/angular/angular.min.js',
+            'lib/angular-mocks/angular-mocks.js',
+            'lib/browserTrigger.js',
+            'src/js/*.js',
+            'test/**/*Spec.js'
+        ],
 
-		exclude: [],
+        exclude: [],
 
-		reporters: ['progress'],
-		port: 9876,
-		colors: true,
-		logLevel: config.LOG_INFO,
-		autoWatch: false,
-		browsers: ['Chrome'],
-		singleRun: true
-	});
+        reporters: ['progress'],
+        port: 9876,
+        colors: true,
+        logLevel: config.LOG_INFO,
+        autoWatch: false,
+        browsers: ['PhantomJS'],
+        singleRun: true
+    });
 };

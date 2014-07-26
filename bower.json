@@ -4,6 +4,7 @@
   "description": "",
   "devDependencies": {
     "angular": "~1.2.18",
-    "angular-mocks": "~1.2.18"
+    "angular-mocks": "~1.2.18",
+    "es5-shim": "~4.0.1"
   }
 }

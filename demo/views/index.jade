@@ -14,6 +14,13 @@ block content
                 .input-group
                     label Code
                     input(type="text", autocomplete="off", name="Postcode", ng-model="postcode", size="6", val-code="Invalid postcode", val-code-length="4")
+                .input-group
+                    label Number
+                    input(type="text", autocomplete="off", ng-model="age", size="6", val-number="Invalid age")
+                .input-group
+                    label Number (Float)
+                    input(type="text", autocomplete="off", ng-model="average", size="8", val-number="Invalid average", val-number-type="float")
+
                 .form-actions
                     button(type="submit", class="btn btn-primary") Submit
 

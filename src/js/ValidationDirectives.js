@@ -1,10 +1,9 @@
 (function (angular) {
 
     /*
-     * Private object that defines the validation functions.
-     * This allows the functions to be shared amongst the directives.
+     * Private object that defines the functions for the validation rules.
      */
-    var validators = {
+    var validationRules = {
         required: function (el) {
             var val;
 
@@ -37,7 +36,7 @@
             if (phone && phone.length === 8) {
                 return true;
             } else {
-                return validators.mobile(el);
+                return validationRules.mobile(el);
             }
         },
         range: function (minValue, maxValue) {
@@ -70,6 +69,25 @@
                     return value.trim() == compareWith.trim();
                 }
             };
+        },
+        number: function (type) {
+            return function (el) {
+                var value = el.value.trim(), result;
+
+                switch (type.toLowerCase()) {
+                    case 'int':
+                    case 'integer':
+                        result =(/^\d+$/.test(value));
+                        break;
+                    case 'float':
+                        result = !isNaN(parseFloat(value));
+                        break;
+                    default:
+                        break;
+                }
+
+                return result;
+            };
         }
     };
 
@@ -99,9 +117,9 @@
                 var isFormValid = true;
 
                 Object.keys(this.fields).forEach(function (key) {
-                    var isValid, vals = this.fields[key];
+                    var isValid, validators = this.fields[key];
 
-                    vals.forEach(function (validator, index) {
+                    validators.forEach(function (validator, index) {
                         var result = index === 0 ? validator() : validator(isValid);
                         isValid = (typeof isValid == 'boolean') ? (isValid && result) : result;
                     });
@@ -169,16 +187,16 @@
         // Generate unique key for the form to be validated.
         // The directives will use this as a reference.
         if (form && form.tagName.toUpperCase() === 'FORM') {
-            name = form.name;
+            name = form.name.trim();
 
             if (!registeredForms.hasOwnProperty(name)) {
-                if (angular.isUndefined(name)) {
-                    name = ((form.id || 'form') + '_' + (+new Date()));
-                } else {
-                    name = name + '_' + (+new Date());
+
+                if (name.length === 0) {
+                    name = form.id.trim();
+                    name = name.length ? form.id : 'form';
                 }
 
-                form.name = name;
+                form.name = name = name.trim().concat('_', (+new Date()));
 
                 registeredForms[name] = new FormValidation(name);
             }
@@ -196,7 +214,7 @@
         var registeredForm,
             watching = angular.isDefined($attr.valWatch),
             validator = makeValidator($element, $scope, key, watching, validationFunc),
-            name = key.split('_')[1];
+            name = key.substr(key.indexOf('_') + 1);
 
         // Initialize the state of the element's validator
         $scope[key] = false;
@@ -207,6 +225,7 @@
             });
         } else {
             registeredForm = registerForValidation($element[0].form);
+
             if (registeredForm) {
                 registeredForm.add(name, validator);
 
@@ -217,6 +236,10 @@
                 });
             }
         }
+    };
+
+    var makeKey = function (directiveName, model) {
+        return directiveName + '_' + model.replace(/\./g, '_');
     };
 
     /**
@@ -265,39 +288,39 @@
             return {
                 restrict: 'A',
                 link: function ($scope, $element, $attr) {
-                    var key = 'valRequired_' + $attr.ngModel.replace('.', '_');
+                    var key = makeKey('valRequired', $attr.ngModel);
                     makeErrorElement($element, $attr.valRequired, key, $scope);
-                    setBehaviour($scope, $element, $attr, key, validators.required);
+                    setBehaviour($scope, $element, $attr, key, validationRules.required);
                 }
             };
         }).directive('valCode', function (makeErrorElement) {
             return {
                 restrict: 'A',
                 link: function ($scope, $element, $attr) {
-                    var key = 'valCode_' + $attr.ngModel.replace('.', '_');
+                    var key = makeKey('valCode', $attr.ngModel);
                     if (angular.isDefined($attr.valCodeLength)) {
                         $element[0].maxLength = parseInt($attr.valCodeLength, 10);
                     }
                     makeErrorElement($element, $attr.valCode, key, $scope);
-                    setBehaviour($scope, $element, $attr, key, validators.code);
+                    setBehaviour($scope, $element, $attr, key, validationRules.code);
                 }
             };
         }).directive('valMobile', function (makeErrorElement) {
             return {
                 restrict: 'A',
                 link: function ($scope, $element, $attr) {
-                    var key = 'valMobile_' + $attr.ngModel.replace('.', '_');
+                    var key = makeKey('valMobile', $attr.ngModel);
                     makeErrorElement($element, $attr.valMobile, key, $scope);
-                    setBehaviour($scope, $element, $attr, key, validators.mobile);
+                    setBehaviour($scope, $element, $attr, key, validationRules.mobile);
                 }
             };
         }).directive('valTelephone', function (makeErrorElement) {
             return {
                 restrict: 'A',
                 link: function ($scope, $element, $attr) {
-                    var key = 'valTelephone_' + $attr.ngModel.replace('.', '_');
+                    var key = makeKey('valTelephone', $attr.ngModel);
                     makeErrorElement($element, $attr.valTelephone, key, $scope);
-                    setBehaviour($scope, $element, $attr, key, validators.telephone);
+                    setBehaviour($scope, $element, $attr, key, validationRules.telephone);
                 }
             };
         }).directive('valRange', function ($parse, makeErrorElement) {
@@ -314,7 +337,7 @@
                     var minValue = $parse($attr.valRangeMin)(),
                         maxValue = $parse($attr.valRangeMax)(),
                         message = $attr.valRange,
-                        key = 'valRange_' + $attr.ngModel.replace('.', '_');
+                        key = makeKey('valRange', $attr.ngModel);
 
                     minValue = (isNaN(minValue) ? 0 : minValue);
                     maxValue = (isNaN(maxValue) ? Number.MAX_VALUE : maxValue);
@@ -327,7 +350,7 @@
                     }
 
                     makeErrorElement($element, message, key, $scope);
-                    setBehaviour($scope, $element, $attr, key, validators.range(minValue, maxValue));
+                    setBehaviour($scope, $element, $attr, key, validationRules.range(minValue, maxValue));
                 }
             };
         }).directive('valPattern', function (makeErrorElement) {
@@ -335,34 +358,42 @@
                 restrict: 'A',
                 link: function ($scope, $element, $attr) {
                     var regex = $attr.valRegex,
-                        key = 'valPattern_' + $attr.ngModel.replace('.', '_'),
-                        message = $attr.valPattern;
+                        key = makeKey('valPattern', $attr.ngModel);
 
-                    makeErrorElement($element, message, key, $scope);
-                    setBehaviour($scope, $element, $attr, key, validators.pattern(regex));
+                    makeErrorElement($element, $attr.valPattern, key, $scope);
+                    setBehaviour($scope, $element, $attr, key, validationRules.pattern(regex));
                 }
             };
         }).directive('valEmail', function (makeErrorElement) {
             return {
                 restrict: 'A',
                 link: function ($scope, $element, $attr) {
-                    var key = 'valEmail_' + $attr.ngModel.replace('.', '_'),
-                        message = $attr.valEmail;
+                    var key = makeKey('valEmail', $attr.ngModel);
 
-                    makeErrorElement($element, message, key, $scope);
-                    setBehaviour($scope, $element, $attr, key, validators.email());
+                    makeErrorElement($element, $attr.valEmail, key, $scope);
+                    setBehaviour($scope, $element, $attr, key, validationRules.email());
                 }
             };
         }).directive('valMatch', function ($parse, makeErrorElement) {
             return {
                 restrict: 'A',
                 link: function ($scope, $element, $attr) {
-                    var key = 'valEmail_' + $attr.ngModel.replace('.', '_'),
-                        message = $attr.valMatch,
+                    var key = makeKey('valEmail', $attr.ngModel),
                         matchWith = $attr.valMatchWith;
 
-                    makeErrorElement($element, message, key, $scope);
-                    setBehaviour($scope, $element, $attr, key, validators.matchWith($parse, $scope, matchWith));
+                    makeErrorElement($element, $attr.valMatch, key, $scope);
+                    setBehaviour($scope, $element, $attr, key, validationRules.matchWith($parse, $scope, matchWith));
+                }
+            };
+        }).directive('valNumber', function (makeErrorElement) {
+            return {
+                restrict: 'A',
+                link: function ($scope, $element, $attr) {
+                    var key = makeKey('valNumber', $attr.ngModel),
+                        numberType = $attr.valNumberType || 'int';
+
+                    makeErrorElement($element, $attr.valNumber, key, $scope);
+                    setBehaviour($scope, $element, $attr, key, validationRules.number(numberType));
                 }
             };
         }).directive('preventTabNext', function () {

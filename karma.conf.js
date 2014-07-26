@@ -12,7 +12,8 @@ module.exports = function (config) {
             'lib/angular-mocks/angular-mocks.js',
             'lib/browserTrigger.js',
             'src/js/*.js',
-            'test/**/*Spec.js'
+            'test/testCommon.js',
+            'test/rules/*Spec.js'
         ],
 
         exclude: [],

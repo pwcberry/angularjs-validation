@@ -3,6 +3,7 @@
 // for execution within the Karma test runner
 
 describe('Validation Module', function () {
+var expectError = Validation.assert.expectValidationError;
 
     beforeEach(module('Validation'));
 
@@ -25,16 +26,16 @@ describe('Validation Module', function () {
             expect(errorElement.text()).to.equal('Please specify');
         });
 
-        describe('in a form', function () {
-            it('should generate an error when form is submitted with an empty field', function () {
+        describe('when in a form', function () {
+            it('should fail when form is submitted with an empty field', function () {
                 var input = element.find('input'), btn = element.find('button');
                 browserTrigger(btn, 'click');
-                expect(input.parent()[0].className).to.contain('has-validation-error');
+                expectError(input);
             });
         });
 
         describe('when isolated', function() {
-            it('should generate an error when model becomes empty', inject(function($compile){
+            it('should fail when model becomes empty', inject(function($compile){
                 var input;
                 element = $compile('<div><input type="text" val-required="Please specify" val-watch ng-model="demo"/></div>')(scope);
                 scope.demo = 'Hello';
@@ -45,7 +46,7 @@ describe('Validation Module', function () {
 
                 input = element.find('input');
 
-                expect(input.parent()[0].className).to.contain('has-validation-error');
+                expectError(input);
             }));
         });
     });

@@ -7,17 +7,20 @@ block content
             form(action="#", method="get", name="DemoForm", val-form, val-submit="submitForm(form)")
                 .input-group.col-12
                     label Last Name
-                    input(type="text", autocomplete="off", name="LastName", ng-model="lastName", val-required="Please specify")
+                    input.full-width(type="text", autocomplete="off", name="LastName", ng-model="lastName", val-required="Please specify")
                 .input-group.col-12
                     label Telephone
-                    input(type="text", autocomplete="off", name="Telephone", ng-model="telephone", val-required="Please specify", val-telephone="Bad phone number")
-                .input-group
+                    input.full-width(type="text", autocomplete="off", name="Telephone", ng-model="telephone", val-required="Please specify", val-telephone="Bad phone number")
+                .input-group.col-6
                     label Code
                     input(type="text", autocomplete="off", name="Postcode", ng-model="postcode", size="6", val-code="Invalid postcode", val-code-length="4")
-                .input-group
+                .input-group.col-6
+                    label Text Length
+                    input.full-width(type="text", autocomplete="off", name="Postcode", ng-model="pitchiTitle", size="6", val-length="Please enter text from 4 to 10 characters", val-watch, val-length-min="4", val-length-max="10")
+                .input-group.col-6
                     label Number
                     input(type="text", autocomplete="off", ng-model="age", size="6", val-number="Invalid age")
-                .input-group
+                .input-group.col-6
                     label Number (Float)
                     input(type="text", autocomplete="off", ng-model="average", size="8", val-number="Invalid average", val-number-type="float")
 

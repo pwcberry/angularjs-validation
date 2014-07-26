@@ -3,7 +3,11 @@
 // for execution within the Karma test runner
 
 describe('Validation Module', function () {
-var expectError = Validation.assert.expectValidationError;
+var inputHtml = '<input type="text" val-required="Please specify" ng-model="demo"/>',
+    inputWatchHtml = '<input type="text" val-required="Please specify" val-watch ng-model="demo"/>',
+    formTemplate = Validation.template.form,
+    isolatedTemplate = Validation.template.isolated,
+    expectError = Validation.assert.expectValidationError;
 
     beforeEach(module('Validation'));
 
@@ -13,7 +17,7 @@ var expectError = Validation.assert.expectValidationError;
 
         beforeEach(inject(function ($rootScope, $compile) {
             scope = $rootScope.$new();
-            element = $compile('<form val-form><div><input type="text" val-required="Please specify" ng-model="demo"/></div><div><button type="submit" id="Btn"></button></div></form>')(scope);
+            element = $compile(formTemplate(inputHtml))(scope);
             scope.$digest();
         }));
 
@@ -37,7 +41,7 @@ var expectError = Validation.assert.expectValidationError;
         describe('when isolated', function() {
             it('should fail when model becomes empty', inject(function($compile){
                 var input;
-                element = $compile('<div><input type="text" val-required="Please specify" val-watch ng-model="demo"/></div>')(scope);
+                element = $compile(isolatedTemplate(inputWatchHtml))(scope);
                 scope.demo = 'Hello';
                 scope.$apply();
 

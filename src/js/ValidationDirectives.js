@@ -77,7 +77,7 @@
                 switch (type.toLowerCase()) {
                     case 'int':
                     case 'integer':
-                        result =(/^\d+$/.test(value));
+                        result = (/^\d+$/.test(value));
                         break;
                     case 'float':
                         result = !isNaN(parseFloat(value));
@@ -87,6 +87,12 @@
                 }
 
                 return result;
+            };
+        },
+        textLength: function (minValue, maxValue) {
+            return function (el) {
+                var value = el.value.trim();
+                return value.length >= minValue && value.length <= maxValue;
             };
         }
     };
@@ -325,11 +331,11 @@
             };
         }).directive('valRange', function ($parse, makeErrorElement) {
             /**
-             * Integer range
+             * Validate a number according to a specified range
              *
              * Sample usage:
              *
-             * <input type="text" val-range="Please enter a value from {{minValue}} to {{maxValue}}" val-range-min="1" val-range-max="10" />
+             * <input type="text" val-range="Please enter a value from 1 to 10" val-range-min="1" val-range-max="10" />
              */
             return {
                 restrict: 'A',
@@ -341,13 +347,6 @@
 
                     minValue = (isNaN(minValue) ? 0 : minValue);
                     maxValue = (isNaN(maxValue) ? Number.MAX_VALUE : maxValue);
-
-                    if (angular.isDefined(message)) {
-                        message = message.replace('{{minValue}}', minValue);
-                        if (maxValue < Number.MAX_VALUE) {
-                            message = message.replace('{{maxValue}}', maxValue);
-                        }
-                    }
 
                     makeErrorElement($element, message, key, $scope);
                     setBehaviour($scope, $element, $attr, key, validationRules.range(minValue, maxValue));
@@ -394,6 +393,31 @@
 
                     makeErrorElement($element, $attr.valNumber, key, $scope);
                     setBehaviour($scope, $element, $attr, key, validationRules.number(numberType));
+                }
+            };
+        }).directive('valLength', function ($parse, makeErrorElement) {
+            /**
+             * Validate the length of a string according to minimum or maximum length requirements.
+             *
+             * If neither minimum or maximum length are specified, validation passes.
+             *
+             * Sample usage:
+             *
+             * <input type="text" val-length="Please enter text from 1 to 10 characters" val-length-min="1" val-length-max="10" />
+             */
+            return {
+                restrict: 'A',
+                link: function ($scope, $element, $attr) {
+                    var minLength = $parse($attr.valLengthMin)(),
+                        maxLength = $parse($attr.valLengthMax)(),
+                        message = $attr.valLength,
+                        key = makeKey('valLength', $attr.ngModel);
+
+                    minLength = (isNaN(minLength) ? 0 : minLength);
+                    maxLength = (isNaN(maxLength) ? Number.MAX_VALUE : maxLength);
+
+                    makeErrorElement($element, message, key, $scope);
+                    setBehaviour($scope, $element, $attr, key, validationRules.textLength(minLength, maxLength));
                 }
             };
         }).directive('preventTabNext', function () {

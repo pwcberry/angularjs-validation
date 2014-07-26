@@ -1,6 +1,6 @@
 describe('Validation Module', function () {
-    var template = '<input type="text" val-number="Invalid number" val-number-type="{{type}}" ng-model="demo"/>',
-        watchTemplate= '<input type="text" val-number="Invalid number" val-number-type="{{type}}" val-watch ng-model="demo"/>',
+    var inputHtml = '<input type="text" val-number="Invalid number" val-number-type="{{type}}" ng-model="demo"/>',
+        inputWatchHtml= '<input type="text" val-number="Invalid number" val-number-type="{{type}}" val-watch ng-model="demo"/>',
         formTemplate = Validation.template.form,
         isolatedTemplate = Validation.template.isolated,
         expectError = Validation.assert.expectValidationError,
@@ -22,7 +22,7 @@ describe('Validation Module', function () {
                 var input, btn;
                 scope.type = '';
                 scope.demo = 'aaa';
-                element = $compile(formTemplate(template))(scope);
+                element = $compile(formTemplate(inputHtml))(scope);
                 scope.$apply();
 
                 input = element.find('input');
@@ -37,7 +37,7 @@ describe('Validation Module', function () {
                 var input, btn;
                 scope.type = 'int';
                 scope.demo = 'aaa';
-                element = $compile(formTemplate(template))(scope);
+                element = $compile(formTemplate(inputHtml))(scope);
                 scope.$apply();
 
                 input = element.find('input');
@@ -51,7 +51,7 @@ describe('Validation Module', function () {
             it('should pass when an integer has been entered and the number type is integer', inject(function ($compile) {
                 var input, btn;
                 scope.type = 'int';
-                element = $compile(formTemplate(template))(scope);
+                element = $compile(formTemplate(inputHtml))(scope);
                 scope.$apply();
 
                 scope.demo = '1234';
@@ -69,7 +69,7 @@ describe('Validation Module', function () {
                 var input, btn;
                 scope.type = 'integer';
                 scope.demo = '120.12';
-                element = $compile(formTemplate(template))(scope);
+                element = $compile(formTemplate(inputHtml))(scope);
                 scope.$apply();
 
                 input = element.find('input');
@@ -84,7 +84,7 @@ describe('Validation Module', function () {
                 var input, btn;
                 scope.type = 'float';
                 scope.demo = 'aaa';
-                element = $compile(formTemplate(template))(scope);
+                element = $compile(formTemplate(inputHtml))(scope);
                 scope.$apply();
 
                 input = element.find('input');
@@ -99,7 +99,7 @@ describe('Validation Module', function () {
                 var input, btn;
                 scope.type = 'float';
                 scope.demo = '1234';
-                element = $compile(formTemplate(template))(scope);
+                element = $compile(formTemplate(inputHtml))(scope);
                 scope.$apply();
 
                 input = element.find('input');
@@ -114,7 +114,7 @@ describe('Validation Module', function () {
                 var input, btn;
                 scope.type = 'float';
                 scope.demo = '123.4';
-                element = $compile(formTemplate(template))(scope);
+                element = $compile(formTemplate(inputHtml))(scope);
                 scope.$apply();
 
                 input = element.find('input');
@@ -129,7 +129,7 @@ describe('Validation Module', function () {
                 var input, btn;
                 scope.type = 'float';
                 scope.demo = '.4';
-                element = $compile(formTemplate(template))(scope);
+                element = $compile(formTemplate(inputHtml))(scope);
                 scope.$apply();
 
                 input = element.find('input');
@@ -146,7 +146,7 @@ describe('Validation Module', function () {
                 var input;
                 scope.type = 'int';
                 scope.demo = '';
-                element = $compile(isolatedTemplate(watchTemplate))(scope);
+                element = $compile(isolatedTemplate(inputWatchHtml))(scope);
                 scope.$apply();
 
                 scope.demo='abc';
@@ -161,7 +161,7 @@ describe('Validation Module', function () {
                 var input;
                 scope.type = 'int';
                 scope.demo = '';
-                element = $compile(isolatedTemplate(watchTemplate))(scope);
+                element = $compile(isolatedTemplate(inputWatchHtml))(scope);
                 scope.$apply();
 
                 scope.demo='abc.31';
@@ -171,6 +171,6 @@ describe('Validation Module', function () {
 
                 expectError(input);
             }));
-        })
+        });
     });
 });

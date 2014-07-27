@@ -122,7 +122,7 @@
                 } else if (modelValue.length) {
                     isValid = true;
                     angular.forEach(modelValue, function (item) {
-                        var check = item != null && ((typeof item == 'boolean' && item) || (angular.isString(item) && item.length));
+                        var check = item !== null && ((typeof item == 'boolean' && item) || (angular.isString(item) && item.length));
                         isValid = isValid && check;
                     });
                 }
@@ -312,7 +312,7 @@
              *
              * Sample usage:
              *
-             * <form name="SignIn" val-form val-submit="signIn(form")>
+             * <form name="SignIn" val-form val-submit="signIn(form)">
              *     <!-- form contents -->
              * </form>
              */
@@ -582,7 +582,7 @@
                     makeErrorElement($element, $attr.valCheckbox, key, $scope);
                     setBehaviour($scope, $element, $attr, key, validationRules.checkbox());
                 }
-            }
+            };
         }).directive('valCheckboxGroup', function ($parse, makeErrorElement) {
             /**
              * Validate a group of checkboxes to ensure at least one has been selected.

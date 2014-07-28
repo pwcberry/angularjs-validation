@@ -1,10 +1,10 @@
-(function (angular) {
+(function(angular) {
 
     /*
      * Private object that defines the functions for the validation rules.
      */
     var validationRules = {
-        required: function (el) {
+        required: function(el) {
             var val;
 
             if (el.type == 'checkbox') {
@@ -15,20 +15,20 @@
             val = el.value.trim();
             return val.length > 0;
         },
-        code: function (el) {
+        code: function(el) {
             var val = el.value.trim(),
                 maxLength = el.maxLength,
                 code = Number(val);
             return val.length === maxLength && !isNaN(code);
         },
-        mobile: function (el) {
+        mobile: function(el) {
             var reMobile = /^(04\d\d)(\d{6})$/,
                 val = el.value.replace(/\s/g, ''),
                 phone = (reMobile.test(val) && RegExp.$2);
 
             return phone && (phone.length === 6);
         },
-        telephone: function (el) {
+        telephone: function(el) {
             var reFixed = /^(0[2378]|13)([02-9]\d{7})$/,
                 val = el.value.replace(/\s/g, ''),
                 phone = (reFixed.test(val) && RegExp.$2);
@@ -39,30 +39,31 @@
                 return validationRules.mobile(el);
             }
         },
-        range: function (minValue, maxValue) {
-            return function (el) {
+        range: function(minValue, maxValue) {
+            return function(el) {
                 var val = parseInt(el.value.replace(/\s/g, ''), 10);
                 return !isNaN(val) && (val >= minValue && val <= maxValue);
             };
         },
-        pattern: function (pattern) {
-            return function (el) {
+        pattern: function(pattern) {
+            return function(el) {
                 var re = new RegExp(pattern.replace('\\', '\\\\')),
                     match = re.exec(el.value);
                 return match !== null && typeof match[0] == 'string';
             };
         },
-        email: function () {
-            return function (el) {
+        email: function() {
+            return function(el) {
                 var val = el.value.trim(),
                     reEmail = new RegExp('[a-z0-9!#$%&\u0027*+/=?^_`{|}~-]+(?:\u002e[a-z0-9!#$%&\u0027*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\u002e)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])');
 
                 return reEmail.test(val);
             };
         },
-        matchWith: function ($parse, $scope, model) {
-            return function (el) {
-                var value = el.value, compareWith = $parse(model)($scope);
+        matchWith: function($parse, $scope, model) {
+            return function(el) {
+                var value = el.value,
+                    compareWith = $parse(model)($scope);
                 if (!value || typeof compareWith == 'undefined') {
                     return true;
                 } else {
@@ -70,9 +71,10 @@
                 }
             };
         },
-        number: function (type) {
-            return function (el) {
-                var value = el.value.trim(), result;
+        number: function(type) {
+            return function(el) {
+                var value = el.value.trim(),
+                    result;
 
                 switch (type.toLowerCase()) {
                     case 'int':
@@ -89,31 +91,32 @@
                 return result;
             };
         },
-        textLength: function (minValue, maxValue) {
-            return function (el) {
+        textLength: function(minValue, maxValue) {
+            return function(el) {
                 var value = el.value.trim();
                 return value.length >= minValue && value.length <= maxValue;
             };
         },
-        radioGroup: function ($parse, $scope, model) {
-            return function () {
+        radioGroup: function($parse, $scope, model) {
+            return function() {
                 var value = $parse(model)($scope);
                 return angular.isDefined(value);
             };
         },
-        checkbox: function () {
-            return function (el) {
+        checkbox: function() {
+            return function(el) {
                 var result = el.checked;
                 return result;
             };
         },
-        checkboxGroup: function ($parse, $scope, model) {
-            return function (el) {
-                var isValid = false, checkboxes, modelValue = $parse(model)($scope);
+        checkboxGroup: function($parse, $scope, model) {
+            return function(el) {
+                var isValid = false,
+                    checkboxes, modelValue = $parse(model)($scope);
 
                 if (!angular.isArray(modelValue)) {
                     checkboxes = el.form[el.name];
-                    angular.forEach(checkboxes, function (chk) {
+                    angular.forEach(checkboxes, function(chk) {
                         if (chk.checked) {
                             isValid = true;
                             return false;
@@ -121,7 +124,7 @@
                     });
                 } else if (modelValue.length) {
                     isValid = true;
-                    angular.forEach(modelValue, function (item) {
+                    angular.forEach(modelValue, function(item) {
                         var check = item !== null && ((typeof item == 'boolean' && item) || (angular.isString(item) && item.length));
                         isValid = isValid && check;
                     });
@@ -137,7 +140,7 @@
      */
     var registeredForms = {};
 
-    var FormValidation = (function () {
+    var FormValidation = (function() {
         function FormValidation(name) {
             this.name = name;
             this.fields = {};
@@ -146,7 +149,7 @@
         }
 
         FormValidation.prototype = {
-            add: function (key, validator) {
+            add: function(key, validator) {
                 if (!this.fieldsAreSet) {
                     if (!angular.isArray(this.fields[key])) {
                         this.fields[key] = [];
@@ -154,13 +157,13 @@
                     this.fields[key].push(validator);
                 }
             },
-            validate: function () {
+            validate: function() {
                 var isFormValid = true;
 
-                Object.keys(this.fields).forEach(function (key) {
+                Object.keys(this.fields).forEach(function(key) {
                     var isValid, validators = this.fields[key];
 
-                    validators.forEach(function (validator, index) {
+                    validators.forEach(function(validator, index) {
                         var result = index === 0 ? validator() : validator(isValid);
                         isValid = (typeof isValid == 'boolean') ? (isValid && result) : result;
                     });
@@ -179,8 +182,8 @@
     /*
      * Private function factory to create validators.
      */
-    var makeValidator = function (element, $scope, key, watching, validate) {
-        return function (validState) {
+    var makeValidator = function(element, $scope, key, watching, validate) {
+        return function(validState) {
             var container = element.parent(),
                 invalidStateKey = element.data('invalidKey'),
                 invalidRequired = (/^valRequired/.test(invalidStateKey)),
@@ -214,7 +217,7 @@
                 }
             }
 
-            if (!watching) {
+            if (!watching && !$scope.$root.$$phase) {
                 $scope.$apply();
             }
 
@@ -222,7 +225,7 @@
         };
     };
 
-    var registerForValidation = function (form) {
+    var registerForValidation = function(form) {
         var name;
 
         // Generate unique key for the form to be validated.
@@ -251,7 +254,7 @@
     /*
      * Private method to set the validation display behaviour.
      */
-    var setBehaviour = function ($scope, $element, $attr, key, validationFunc) {
+    var setBehaviour = function($scope, $element, $attr, key, validationFunc) {
         var registeredForm,
             checkable = ((/radio|checkbox/).test($element[0].type)),
             watching = (angular.isDefined($attr.valWatch) || checkable),
@@ -262,7 +265,7 @@
         $scope[key] = false;
 
         if (watching && !checkable) {
-            $scope.$watch(function () {
+            $scope.$watch(function() {
                 validator();
             });
         } else {
@@ -275,14 +278,14 @@
                 // When a user is using the keyboard to navigate radio buttons,
                 // because only one radio button from the group is actually known to the directive.
                 if (!checkable) {
-                    $element.on('blur', function () {
+                    $element.on('blur', function() {
                         if (!registeredForm.firstValidation) {
                             validator();
                         }
                     });
                 } else {
                     // When the radio button changes, we need to remove any validation errors
-                    $scope.$watch(function () {
+                    $scope.$watch(function() {
                         if (!registeredForm.firstValidation) {
                             validator();
                         }
@@ -292,7 +295,7 @@
         }
     };
 
-    var makeKey = function (directiveName, model) {
+    var makeKey = function(directiveName, model) {
         return directiveName + '_' + model.replace(/\./g, '_');
     };
 
@@ -300,7 +303,7 @@
      * Custom directives to handle form validation.
      */
     angular.module('Validation', [])
-        .directive('valForm', function ($parse) {
+        .directive('valForm', function($parse) {
             /**
              * Specify that submission of a form is the first step of validation. Subsequent validation is performed when the input field changes.
              *
@@ -312,13 +315,13 @@
              *
              * Sample usage:
              *
-             * <form name="SignIn" val-form val-submit="signIn(form)">
+             * <form name="SignIn" val-form val-submit="signIn(form")>
              *     <!-- form contents -->
              * </form>
              */
             return {
                 restrict: 'A',
-                link: function ($scope, $element, $attr) {
+                link: function($scope, $element, $attr) {
                     var submitHandler,
                         registeredForm = registerForValidation($element[0]);
 
@@ -330,7 +333,7 @@
                         registeredForm.firstValidation = true;
 
                         submitHandler = $parse($attr.valSubmit);
-                        $element.on('submit', function (ev) {
+                        $element.on('submit', function(ev) {
                             try {
                                 if (registeredForm.firstValidation) {
                                     registeredForm.firstValidation = false;
@@ -339,8 +342,10 @@
                                     registeredForm.fieldsAreSet = true;
                                 }
                                 if (registeredForm.validate() && angular.isDefined(submitHandler)) {
-                                    $scope.$apply(function () {
-                                        submitHandler($scope, {form: $element});
+                                    $scope.$eval(function() {
+                                        submitHandler($scope, {
+                                            form: $element
+                                        });
                                     });
                                 }
                             } catch (e) {
@@ -353,7 +358,7 @@
                 }
             };
         })
-        .directive('valRequired', function (makeErrorElement) {
+        .directive('valRequired', function(makeErrorElement) {
             /**
              * Validate an input to ensure it has a value, thus complying with its mandatory status.
              *
@@ -363,13 +368,13 @@
              */
             return {
                 restrict: 'A',
-                link: function ($scope, $element, $attr) {
+                link: function($scope, $element, $attr) {
                     var key = makeKey('valRequired', $attr.ngModel);
                     makeErrorElement($element, $attr.valRequired, key, $scope);
                     setBehaviour($scope, $element, $attr, key, validationRules.required);
                 }
             };
-        }).directive('valCode', function (makeErrorElement) {
+        }).directive('valCode', function(makeErrorElement) {
             /**
              * Validate a numeric code.
              *
@@ -384,7 +389,7 @@
              */
             return {
                 restrict: 'A',
-                link: function ($scope, $element, $attr) {
+                link: function($scope, $element, $attr) {
                     var key = makeKey('valCode', $attr.ngModel);
                     if (angular.isDefined($attr.valCodeLength)) {
                         $element[0].maxLength = parseInt($attr.valCodeLength, 10);
@@ -393,7 +398,7 @@
                     setBehaviour($scope, $element, $attr, key, validationRules.code);
                 }
             };
-        }).directive('valMobile', function (makeErrorElement) {
+        }).directive('valMobile', function(makeErrorElement) {
             /**
              * Validate an Australian mobile number.
              *
@@ -403,13 +408,13 @@
              */
             return {
                 restrict: 'A',
-                link: function ($scope, $element, $attr) {
+                link: function($scope, $element, $attr) {
                     var key = makeKey('valMobile', $attr.ngModel);
                     makeErrorElement($element, $attr.valMobile, key, $scope);
                     setBehaviour($scope, $element, $attr, key, validationRules.mobile);
                 }
             };
-        }).directive('valTelephone', function (makeErrorElement) {
+        }).directive('valTelephone', function(makeErrorElement) {
             /**
              * Validate an Australian land-line or mobile phone number.
              *
@@ -419,13 +424,13 @@
              */
             return {
                 restrict: 'A',
-                link: function ($scope, $element, $attr) {
+                link: function($scope, $element, $attr) {
                     var key = makeKey('valTelephone', $attr.ngModel);
                     makeErrorElement($element, $attr.valTelephone, key, $scope);
                     setBehaviour($scope, $element, $attr, key, validationRules.telephone);
                 }
             };
-        }).directive('valRange', function ($parse, makeErrorElement) {
+        }).directive('valRange', function($parse, makeErrorElement) {
             /**
              * Validate a number according to a specified range.
              *
@@ -435,7 +440,7 @@
              */
             return {
                 restrict: 'A',
-                link: function ($scope, $element, $attr) {
+                link: function($scope, $element, $attr) {
                     var minValue = $parse($attr.valRangeMin)(),
                         maxValue = $parse($attr.valRangeMax)(),
                         message = $attr.valRange,
@@ -448,7 +453,7 @@
                     setBehaviour($scope, $element, $attr, key, validationRules.range(minValue, maxValue));
                 }
             };
-        }).directive('valPattern', function (makeErrorElement) {
+        }).directive('valPattern', function(makeErrorElement) {
             /**
              * Validate an input according to a specified regular expression pattern.
              *
@@ -458,7 +463,7 @@
              */
             return {
                 restrict: 'A',
-                link: function ($scope, $element, $attr) {
+                link: function($scope, $element, $attr) {
                     var regex = $attr.valRegex,
                         key = makeKey('valPattern', $attr.ngModel);
 
@@ -466,7 +471,7 @@
                     setBehaviour($scope, $element, $attr, key, validationRules.pattern(regex));
                 }
             };
-        }).directive('valEmail', function (makeErrorElement) {
+        }).directive('valEmail', function(makeErrorElement) {
             /**
              * Validate an email address.
              *
@@ -476,14 +481,14 @@
              */
             return {
                 restrict: 'A',
-                link: function ($scope, $element, $attr) {
+                link: function($scope, $element, $attr) {
                     var key = makeKey('valEmail', $attr.ngModel);
 
                     makeErrorElement($element, $attr.valEmail, key, $scope);
                     setBehaviour($scope, $element, $attr, key, validationRules.email());
                 }
             };
-        }).directive('valMatch', function ($parse, makeErrorElement) {
+        }).directive('valMatch', function($parse, makeErrorElement) {
             /**
              * Validate an input by comparing (or matching) with the value of another model binding.
              *
@@ -493,7 +498,7 @@
              */
             return {
                 restrict: 'A',
-                link: function ($scope, $element, $attr) {
+                link: function($scope, $element, $attr) {
                     var key = makeKey('valMatch', $attr.ngModel),
                         matchWith = $attr.valMatchWith;
 
@@ -501,7 +506,7 @@
                     setBehaviour($scope, $element, $attr, key, validationRules.matchWith($parse, $scope, matchWith));
                 }
             };
-        }).directive('valNumber', function (makeErrorElement) {
+        }).directive('valNumber', function(makeErrorElement) {
             /**
              * Validate the input to determine if it is an integer or a float (decimal).
              *
@@ -513,7 +518,7 @@
              */
             return {
                 restrict: 'A',
-                link: function ($scope, $element, $attr) {
+                link: function($scope, $element, $attr) {
                     var key = makeKey('valNumber', $attr.ngModel),
                         numberType = $attr.valNumberType || 'int';
 
@@ -521,7 +526,7 @@
                     setBehaviour($scope, $element, $attr, key, validationRules.number(numberType));
                 }
             };
-        }).directive('valLength', function ($parse, makeErrorElement) {
+        }).directive('valLength', function($parse, makeErrorElement) {
             /**
              * Validate the length of an input value according to minimum or maximum length requirements.
              *
@@ -533,7 +538,7 @@
              */
             return {
                 restrict: 'A',
-                link: function ($scope, $element, $attr) {
+                link: function($scope, $element, $attr) {
                     var minLength = $parse($attr.valLengthMin)(),
                         maxLength = $parse($attr.valLengthMax)(),
                         message = $attr.valLength,
@@ -546,7 +551,7 @@
                     setBehaviour($scope, $element, $attr, key, validationRules.textLength(minLength, maxLength));
                 }
             };
-        }).directive('valRadio', function ($parse, makeErrorElement) {
+        }).directive('valRadio', function($parse, makeErrorElement) {
             /**
              * Validate a group of radio buttons, that have the same name or model, to ensure one is selected.
              *
@@ -559,14 +564,14 @@
              */
             return {
                 restrict: 'A',
-                link: function ($scope, $element, $attr) {
+                link: function($scope, $element, $attr) {
                     var key = makeKey('valRadio', $attr.ngModel);
 
                     makeErrorElement($element, $attr.valRadio, key, $scope);
                     setBehaviour($scope, $element, $attr, key, validationRules.radioGroup($parse, $scope, $attr.ngModel));
                 }
             };
-        }).directive('valCheckbox', function ($parse, makeErrorElement) {
+        }).directive('valCheckbox', function($parse, makeErrorElement) {
             /**
              * Validate a checkbox to ensure it has been selected.
              *
@@ -576,14 +581,14 @@
              */
             return {
                 restrict: 'A',
-                link: function ($scope, $element, $attr) {
+                link: function($scope, $element, $attr) {
                     var key = makeKey('valCheckbox', $attr.ngModel);
 
                     makeErrorElement($element, $attr.valCheckbox, key, $scope);
                     setBehaviour($scope, $element, $attr, key, validationRules.checkbox());
                 }
             };
-        }).directive('valCheckboxGroup', function ($parse, makeErrorElement) {
+        }).directive('valCheckboxGroup', function($parse, makeErrorElement) {
             /**
              * Validate a group of checkboxes to ensure at least one has been selected.
              *
@@ -596,7 +601,7 @@
              * <input type="checkbox" ng-model="food[2]" ng-true-value="fish" />
              */
             return {
-                link: function ($scope, $element, $attr) {
+                link: function($scope, $element, $attr) {
                     var name = angular.isDefined($attr.ngModel) ? $attr.ngModel : $element[0].name,
                         key = makeKey('valCheckboxGroup', name.replace(/\[\d+\]/, '')),
                         modelArrayName = angular.isDefined($attr.ngModel) ? $attr.ngModel.replace(/\[\d+\]/, '') : '';
@@ -605,14 +610,14 @@
                     setBehaviour($scope, $element, $attr, key, validationRules.checkboxGroup($parse, $scope, modelArrayName));
                 }
             };
-        }).directive('preventTabNext', function () {
+        }).directive('preventTabNext', function() {
             /**
              * Prevent the user from tabbing to the next element in the tab-index sequence.
              */
             return {
                 restrict: 'A',
-                link: function ($scope, $element) {
-                    $element.on('keydown', function (ev) {
+                link: function($scope, $element) {
+                    $element.on('keydown', function(ev) {
                         if (ev.which === 9) {
                             ev.preventDefault();
                             ev.stopPropagation();
@@ -620,10 +625,10 @@
                     });
                 }
             };
-        }).factory('makeErrorElement', function ($compile) {
+        }).factory('makeErrorElement', function($compile) {
             // Private function to add the error element to the container with the target input element.
             // Declared here to manage the $compile dependency (rather than having every directive having to declare it).
-            return function (element, message, key, $scope) {
+            return function(element, message, key, $scope) {
                 var msg = (angular.isString(message) ? message : 'Invalid'),
                     err = $compile('<span class="error-message" ng-show="' + key + '">' + msg + '</span>')($scope);
                 element.parent().append(err);

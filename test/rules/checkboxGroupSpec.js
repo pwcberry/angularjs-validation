@@ -21,7 +21,6 @@ describe('Validation Module', function () {
 
             it('should fail when checkboxes are unselected', function () {
                 var input = element.find('input')[0], btn = element.find('button');
-                console.log(element);
                 browserTrigger(btn, 'click');
                 expectError(input);
             });

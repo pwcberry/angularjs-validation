@@ -89,6 +89,21 @@ describe('Validation Module', function () {
             expectError(input);
         }));
 
+        it('should have an error element when initially hidden by ng-if', inject(function($compile){
+            var html = '<div ng-if="isVisible">' + inputHtml + '</div>',
+                formElement, input, errorMessage;
+
+            formElement = $compile(formSubmitTemplate(html))(scope);
+
+            scope.isVisible = true;
+            scope.$apply();
+
+            input = formElement.find('input')
+            errorMessage = input[0].nextSibling;
+
+            expect(errorMessage).to.be.an('object');
+            expect(errorMessage.className).to.contain('error-message');
+        }));
 
     });
 

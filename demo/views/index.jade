@@ -8,18 +8,18 @@ block content
                 .row
                     .input-group.col-12
                         label Last Name
-                        input.full-width(type="text", autocomplete="off", name="LastName", ng-model="lastName", val-required="Please specify")
+                        input.full-width(type="text", autocomplete="off", ng-model="lastName", val-required="Please specify")
                 .row
                     .input-group.col-12
                         label Telephone
-                        input.full-width(type="text", autocomplete="off", name="Telephone", ng-model="telephone", val-required="Please specify", val-telephone="Bad phone number")
+                        input.full-width(type="text", autocomplete="off", ng-model="telephone", val-required="Please specify", val-telephone="Bad phone number")
                 .row
                     .input-group.col-6
                         label Code
-                        input(type="text", autocomplete="off", name="Postcode", ng-model="postcode", size="6", val-code="Invalid postcode", val-code-length="4")
+                        input(type="text", autocomplete="off", ng-model="postcode", size="6", val-code="Invalid postcode", val-code-length="4")
                     .input-group.col-6
                         label Text Length
-                        input.full-width(type="text", autocomplete="off", name="Postcode", ng-model="pitchiTitle", size="6", val-length="Please enter text from 4 to 10 characters", val-watch, val-length-min="4", val-length-max="10")
+                        input.full-width(type="text", autocomplete="off", ng-model="pitchiTitle", size="6", val-length="Please enter text from 4 to 10 characters", val-watch, val-length-min="4", val-length-max="10")
                 .row
                     .input-group.col-6
                         label Number
@@ -48,28 +48,20 @@ block content
 
                 .row
                     .input-group
-                        label Meal options
-                        .checkbox-button-group
-                            input(type="checkbox", val-checkbox-group="Specify food", ng-model="food[0]", ng-true-value="Chicken", id="Food-Chicken")
-                            label(for="Food-Chicken") Chicken
-                        .checkbox-button-group
-                            input(type="checkbox", ng-model="food[1]", ng-true-value="Beef", id="Food-Beef")
-                            label(for="Food-Beef") Beef
-                        .checkbox-button-group
-                            input(type="checkbox", ng-model="food[2]", ng-true-value="Pork", id="Food-Pork")
-                            label(for="Food-Pork") Pork
-                        .checkbox-button-group
-                            input(type="checkbox", ng-model="food[3]", ng-true-value="Fish", id="Food-Fish")
-                            label(for="Food-Fish") Fish
-                        .checkbox-button-group
-                            p="{{food}}"
-
-                .row
-                    .input-group
                         .checkbox-button-group
                             input(type="checkbox", val-checkbox="Please specify", ng-model="termsAndConditions", id="Terms")
                             label(for="Terms") I have read the terms and conditions
 
+                .row
+                    .input-group
+                        .checkbox-button-group
+                            input(type="checkbox", ng-model="showSuburb", id="Show-Suburb")
+                            label(for="Show-Suburb") Enter Suburb?
+
+                .row(ng-if="showSuburb")
+                    .input-group
+                        label Suburb
+                        input(type="text", ng-model="suburb", val-required="Please enter your suburb")
 
                 .form-actions
                     button(type="submit", class="btn btn-primary") Submit

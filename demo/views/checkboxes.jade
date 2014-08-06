@@ -1,0 +1,30 @@
+extends layout
+block content
+    .page-content(ng-app="ValidationDemo")
+        h1= title
+        .person-form(ng-controller="DemoCtrl")
+            form(action="#", method="get", name="DemoForm", val-form, val-submit="submitForm(form)")
+                .row
+                    .input-group
+                        label Meal options
+                        .checkbox-button-group
+                            input(type="checkbox", val-checkbox-group="Specify food", ng-model="food[0]", ng-true-value="Chicken", id="Food-Chicken")
+                            label(for="Food-Chicken") Chicken
+                        .checkbox-button-group
+                            input(type="checkbox", ng-model="food[1]", ng-true-value="Beef", id="Food-Beef")
+                            label(for="Food-Beef") Beef
+                        .checkbox-button-group
+                            input(type="checkbox", ng-model="food[2]", ng-true-value="Pork", id="Food-Pork")
+                            label(for="Food-Pork") Pork
+                        .checkbox-button-group
+                            input(type="checkbox", ng-model="food[3]", ng-true-value="Fish", id="Food-Fish")
+                            label(for="Food-Fish") Fish
+                        .checkbox-button-group
+                            p="{{food}}"
+
+                .form-actions
+                    button(type="submit", class="btn btn-primary") Submit
+
+block scripts
+    script(src="/javascripts/validation.js")
+    script(src="/javascripts/demo.js")

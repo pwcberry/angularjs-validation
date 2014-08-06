@@ -18,12 +18,13 @@ module.exports = function (config) {
 
         exclude: [],
 
-        reporters: ['progress'],
         port: 9876,
         colors: true,
         logLevel: config.LOG_INFO,
         autoWatch: false,
         browsers: ['PhantomJS'],
+        reporters: ['mocha'],
+        plugins: ['karma-phantomjs-launcher', 'karma-mocha', 'karma-chai', 'karma-mocha-reporter'],
         singleRun: true
     });
 };

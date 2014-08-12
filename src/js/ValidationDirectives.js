@@ -55,7 +55,7 @@
         email: function () {
             return function email(el) {
                 var val = el.value.trim(),
-                    reEmail = new RegExp('[a-z0-9!#$%&\u0027*+/=?^_`{|}~-]+(?:\u002e[a-z0-9!#$%&\u0027*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\u002e)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])');
+                    reEmail = new RegExp('[a-z0-9!#$%&\u0027*+/=?^_`{|}~-]+(?:\u002e[a-z0-9!#$%&\u0027*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\u002e)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])','i');
 
                 return reEmail.test(val);
             };
@@ -64,6 +64,7 @@
             return function matchWith(el) {
                 var value = el.value,
                     compareWith = $parse(model)($scope);
+
                 if (!value || typeof compareWith == 'undefined') {
                     return true;
                 } else {
@@ -145,20 +146,19 @@
             this.name = name;
             this.fields = {};
             this.firstValidation = false;
-            this.fieldsAreSet = false;
         }
 
         FormValidation.prototype = {
-            add: function (key, validator) {
+            add: function (key, validator, validatorName) {
                 var keyHasValidator = false;
 
-                    if (!angular.isArray(this.fields[key])) {
-                        this.fields[key] = [];
-                    }
+                if (!angular.isArray(this.fields[key])) {
+                    this.fields[key] = [];
+                }
 
                 if (this.fields[key].length) {
-                    angular.forEach(this.fields[key], function (v) {
-                        keyHasValidator = v.name == validator.name;
+                    angular.forEach(this.fields[key], function (o) {
+                        keyHasValidator = o.name == validatorName;
                         if (keyHasValidator) {
                             return false;
                         }
@@ -166,7 +166,10 @@
                 }
 
                 if (!keyHasValidator) {
-                    this.fields[key].push(validator);
+                    this.fields[key].push({
+                        name: validatorName,
+                        validator: validator
+                    });
                 }
             },
             validate: function () {
@@ -175,8 +178,8 @@
                 Object.keys(this.fields).forEach(function (key) {
                     var isValid, validators = this.fields[key];
 
-                    validators.forEach(function (validator, index) {
-                        var result = index === 0 ? validator() : validator(isValid);
+                    validators.forEach(function (v, index) {
+                        var result = index === 0 ? v.validator() : v.validator(isValid);
                         isValid = (typeof isValid == 'boolean') ? (isValid && result) : result;
                     });
 
@@ -210,7 +213,6 @@
                     container.addClass('has-validation-error');
                     $scope[key] = true;
 
-
                     // The previous validation is to be cleared if the required field is invalid
                     if (angular.isString(invalidStateKey) && !invalidRequired && isRequired) {
                         $scope[invalidStateKey] = false;
@@ -230,9 +232,9 @@
             }
 
             if ($scope.$root) {
-            if (!watching && !$scope.$root.$$phase) {
-                $scope.$apply();
-            }
+                if (!watching && !$scope.$root.$$phase) {
+                    $scope.$apply();
+                }
             } else {
                 // Element is no longer a part of the DOM
                 $scope[key] = false;
@@ -290,7 +292,7 @@
             registeredForm = registerForValidation($element[0].form);
 
             if (registeredForm) {
-                registeredForm.add(name, validator);
+                registeredForm.add(name, validator, validationFunc.name);
 
                 // Checking for the blur event doesn't make sense with radio buttons.
                 // When a user is using the keyboard to navigate radio buttons,
@@ -356,9 +358,7 @@
                                 if (registeredForm.firstValidation) {
                                     registeredForm.firstValidation = false;
                                 }
-//                                if (!registeredForm.fieldsAreSet) {
-//                                    registeredForm.fieldsAreSet = true;
-//                                }
+
                                 if (registeredForm.validate() && angular.isDefined(submitHandler)) {
                                     $scope.$eval(function () {
                                         submitHandler($scope, {
